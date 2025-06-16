@@ -45,6 +45,10 @@
       <default>false</default>
       <summary>Whether to trash all taken screenshots from the current session on close.</summary>
     </key>
+    <key name="image-options-lock" type="b">
+      <default>false</default>
+      <summary>Whether to trash all taken screenshots from the current session on close.</summary>
+    </key>
   </schema>
 </schemalist>
 

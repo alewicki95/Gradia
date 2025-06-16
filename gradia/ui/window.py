@@ -58,7 +58,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     welcome_content: WelcomePage = Gtk.Template.Child()
 
     main_stack: Gtk.Stack = Gtk.Template.Child()
-    main_box: Gtk.Box = Gtk.Template.Child()
+    split_view: Gtk.Box = Gtk.Template.Child()
 
     def __init__(
         self,
@@ -189,9 +189,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.sidebar.set_visible(False)
 
     def _setup(self) -> None:
-        self.main_box.append(self.sidebar)
-        self.main_box.append(self.stack_box)
-
+        self.split_view.set_sidebar(self.sidebar)
+        self.split_view.set_content(self.stack_box)
         self.image_stack.set_hexpand(True)
         self.sidebar.set_hexpand(False)
 
@@ -210,16 +209,15 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.processor.background = updated_background
         self._trigger_processing()
 
-    def on_padding_changed(self, row: Adw.SpinRow) -> None:
-        setattr(self.processor, "padding", int(row.get_value()))
+    def on_padding_changed(self, value: int) -> None:
+        setattr(self.processor, "padding", value)
         self._trigger_processing()
 
-    def on_corner_radius_changed(self, row: Adw.SpinRow) -> None:
-        setattr(self.processor, "corner_radius", int(row.get_value()))
+    def on_corner_radius_changed(self, value: int) -> None:
+        setattr(self.processor, "corner_radius", value)
         self._trigger_processing()
 
-    def on_aspect_ratio_changed(self, entry: Gtk.Entry) -> None:
-        text: str = entry.get_text().strip()
+    def on_aspect_ratio_changed(self, text: str) -> None:
         try:
             ratio: Optional[float] = parse_aspect_ratio(text)
             if ratio is None:
@@ -236,8 +234,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         except Exception as e:
             print(f"Invalid aspect ratio: {text} ({e})")
 
-    def on_shadow_strength_changed(self, strength: Gtk.Scale) -> None:
-        self.processor.shadow_strength = strength.get_value()
+    def on_shadow_strength_changed(self, value: int) -> None:
+        self.processor.shadow_strength = value
         self._trigger_processing()
 
     def _on_about_activated(self, _action: Gio.SimpleAction, _param: GObject.ParamSpec) -> None:

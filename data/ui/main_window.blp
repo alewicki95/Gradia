@@ -23,9 +23,7 @@ template $GradiaMainWindow : Adw.ApplicationWindow {
         Gtk.StackPage main_page {
           name: "main";
 
-          child: Gtk.Box main_box {
-            orientation: horizontal;
-            vexpand: true;
+          child: Adw.OverlaySplitView split_view {
           };
         }
 

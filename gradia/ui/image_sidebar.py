@@ -20,6 +20,7 @@ from gi.repository import Gtk, Adw
 from gradia.ui.drawing_tools_group import DrawingToolsGroup
 from gradia.ui.background_selector import BackgroundSelector
 from gradia.constants import rootdir  # pyright: ignore
+from gradia.backend.settings import Settings
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/image_sidebar.ui")
 class ImageSidebar(Adw.Bin):
@@ -32,7 +33,8 @@ class ImageSidebar(Adw.Bin):
     background_selector_group: Adw.PreferencesGroup = Gtk.Template.Child()
 
     # `image_options_group` template children
-    disable_button: Gtk.Button = Gtk.Template.Child()
+    image_options_group = Gtk.Template.Child()
+    disable_button: Gtk.Switch = Gtk.Template.Child()  # Changed to Switch
     padding_row: Adw.SpinRow = Gtk.Template.Child()
     padding_adjustment: Gtk.Adjustment = Gtk.Template.Child()
     corner_radius_row: Adw.SpinRow = Gtk.Template.Child()
@@ -54,76 +56,112 @@ class ImageSidebar(Adw.Bin):
     def __init__(
         self,
         background_selector_widget: BackgroundSelector,
-        on_padding_changed: Callable[[Adw.SpinRow], None],
-        on_corner_radius_changed: Callable[[Adw.SpinRow], None],
-        on_aspect_ratio_changed: Callable[[Gtk.Entry], None],
-        on_shadow_strength_changed: Callable[[Gtk.Scale], None],
+        on_padding_changed: Callable[[int], None],
+        on_corner_radius_changed: Callable[[int], None],
+        on_aspect_ratio_changed: Callable[[str], None],
+        on_shadow_strength_changed: Callable[[int], None],
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
 
-        # Store callbacks for reset functionality
         self._on_padding_changed = on_padding_changed
         self._on_corner_radius_changed = on_corner_radius_changed
         self._on_aspect_ratio_changed = on_aspect_ratio_changed
         self._on_shadow_strength_changed = on_shadow_strength_changed
 
-        self.background_selector_group.add(background_selector_widget)
-        self._setup_image_options_group(
-            on_padding_changed,
-            on_corner_radius_changed,
-            on_aspect_ratio_changed,
-            on_shadow_strength_changed
-        )
+        self.image_options_group_content = self.image_options_group.get_first_child().get_first_child().get_next_sibling()
 
-        self.disable_button.connect("clicked", self._on_disable_button_clicked)
+        self._actual_padding = 5
+        self._actual_corner_radius = 2
+        self._actual_aspect_ratio = ""
+        self._actual_shadow_strength = 5
+
+        self.background_selector_group.add(background_selector_widget)
+        self._setup_image_options_group()
+
+        self.disable_button.connect("toggled", self._on_disable_switch_clicked)
+        Settings().bind_switch(self.disable_button, "image-options-lock")
+        self._on_disable_switch_clicked(self.disable_button)
 
     """
     Setup Methods
     """
-    def _setup_image_options_group(
-        self,
-        on_padding_changed: Callable[[Adw.SpinRow], None],
-        on_corner_radius_changed: Callable[[Adw.SpinRow], None],
-        on_aspect_ratio_changed: Callable[[Gtk.Entry], None],
-        on_shadow_strength_changed: Callable[[Gtk.Scale], None],
-    ) -> None:
+    def _setup_image_options_group(self) -> None:
         self.padding_adjustment.set_value(5)
         self.corner_radius_adjustment.set_value(2)
         self.shadow_strength_scale.set_value(5)
 
-        self.padding_row.connect("output", on_padding_changed)
-        self.corner_radius_row.connect("output", on_corner_radius_changed)
-        self.aspect_ratio_entry.connect("changed", on_aspect_ratio_changed)
-        self.shadow_strength_scale.connect("value-changed", on_shadow_strength_changed)
+        self.padding_row.connect("output", self._on_padding_widget_changed)
+        self.corner_radius_row.connect("output", self._on_corner_radius_widget_changed)
+        self.aspect_ratio_entry.connect("changed", self._on_aspect_ratio_widget_changed)
+        self.shadow_strength_scale.connect("value-changed", self._on_shadow_strength_widget_changed)
+
+        self.padding_adjustment.connect("value-changed", self._on_actual_padding_changed)
+        self.corner_radius_adjustment.connect("value-changed", self._on_actual_corner_radius_changed)
+        self.aspect_ratio_entry.connect("changed", self._on_actual_aspect_ratio_changed)
+        self.shadow_strength_scale.connect("value-changed", self._on_actual_shadow_strength_changed)
+
+    """
+    Callbacks for tracking actual values
+    """
+    def _on_actual_padding_changed(self, adjustment: Gtk.Adjustment) -> None:
+        if not self.disable_button.get_active():
+            self._actual_padding = int(adjustment.get_value())
+
+    def _on_actual_corner_radius_changed(self, adjustment: Gtk.Adjustment) -> None:
+        if not self.disable_button.get_active():
+            self._actual_corner_radius = int(adjustment.get_value())
+
+    def _on_actual_aspect_ratio_changed(self, entry: Gtk.Entry) -> None:
+        if not self.disable_button.get_active():
+            self._actual_aspect_ratio = entry.get_text()
+
+    def _on_actual_shadow_strength_changed(self, scale: Gtk.Scale) -> None:
+        if not self.disable_button.get_active():
+            self._actual_shadow_strength = int(scale.get_value())
+
+    def _on_padding_widget_changed(self, spin_row: Adw.SpinRow) -> None:
+        if self.disable_button.get_active():
+            self._on_padding_changed(self.DEFAULT_PADDING)
+        else:
+            self._on_padding_changed(int(spin_row.get_value()))
+
+    def _on_corner_radius_widget_changed(self, spin_row: Adw.SpinRow) -> None:
+        if self.disable_button.get_active():
+            self._on_corner_radius_changed(self.DEFAULT_CORNER_RADIUS)
+        else:
+            self._on_corner_radius_changed(int(spin_row.get_value()))
+
+    def _on_aspect_ratio_widget_changed(self, entry: Gtk.Entry) -> None:
+        if self.disable_button.get_active():
+            self._on_aspect_ratio_changed(self.DEFAULT_ASPECT_RATIO)
+        else:
+            self._on_aspect_ratio_changed(entry.get_text())
+
+    def _on_shadow_strength_widget_changed(self, scale: Gtk.Scale) -> None:
+        if self.disable_button.get_active():
+            self._on_shadow_strength_changed(self.DEFAULT_SHADOW_STRENGTH)
+        else:
+            self._on_shadow_strength_changed(int(scale.get_value()))
 
     """
     Callbacks
     """
-    def _on_disable_button_clicked(self, button: Gtk.Button) -> None:
-        self.padding_row.handler_block_by_func(self._on_padding_changed)
-        self.corner_radius_row.handler_block_by_func(self._on_corner_radius_changed)
-        self.aspect_ratio_entry.handler_block_by_func(self._on_aspect_ratio_changed)
-        self.shadow_strength_scale.handler_block_by_func(self._on_shadow_strength_changed)
-
-        try:
-            self.padding_adjustment.set_value(self.DEFAULT_PADDING)
-            self.corner_radius_adjustment.set_value(self.DEFAULT_CORNER_RADIUS)
-            self.aspect_ratio_entry.set_text(self.DEFAULT_ASPECT_RATIO)
-            self.shadow_strength_scale.set_value(self.DEFAULT_SHADOW_STRENGTH)
-        finally:
-            self.padding_row.handler_unblock_by_func(self._on_padding_changed)
-            self.corner_radius_row.handler_unblock_by_func(self._on_corner_radius_changed)
-            self.aspect_ratio_entry.handler_unblock_by_func(self._on_aspect_ratio_changed)
-            self.shadow_strength_scale.handler_unblock_by_func(self._on_shadow_strength_changed)
-
-        self._on_padding_changed(self.padding_row)
-        self._on_corner_radius_changed(self.corner_radius_row)
-        self._on_aspect_ratio_changed(self.aspect_ratio_entry)
-        self._on_shadow_strength_changed(self.shadow_strength_scale)
-
-    def reset_to_defaults(self) -> None:
-        self._on_disable_button_clicked(self.disable_button)
+    def _on_disable_switch_clicked(self, switch: Gtk.Switch) -> None:
+        state = switch.get_active()
+        self.image_options_group_content.set_sensitive(not state)
+        if state:
+            # Default values
+            self._on_padding_changed(self.DEFAULT_PADDING)
+            self._on_corner_radius_changed(self.DEFAULT_CORNER_RADIUS)
+            self._on_aspect_ratio_changed(self.DEFAULT_ASPECT_RATIO)
+            self._on_shadow_strength_changed(self.DEFAULT_SHADOW_STRENGTH)
+        else:
+            # actual values
+            self._on_padding_changed(self._actual_padding)
+            self._on_corner_radius_changed(self._actual_corner_radius)
+            self._on_aspect_ratio_changed(self._actual_aspect_ratio)
+            self._on_shadow_strength_changed(self._actual_shadow_strength)
 
     """
     Internal Methods
