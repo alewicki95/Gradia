@@ -4,6 +4,7 @@
     <file preprocess="xml-stripblanks">ui/selectors/gradient_selector.ui</file>
     <file preprocess="xml-stripblanks">ui/selectors/image_selector.ui</file>
     <file preprocess="xml-stripblanks">ui/selectors/solid_selector.ui</file>
+    <file preprocess="xml-stripblanks">ui/selectors/none_selector.ui</file>
     <file preprocess="xml-stripblanks">ui/background_selector.ui</file>
     <file preprocess="xml-stripblanks">ui/controls_overlay.ui</file>
     <file preprocess="xml-stripblanks">ui/drawing_tools_group.ui</file>
@@ -41,7 +42,7 @@
     <file preprocess="xml-stripblanks">icons/scalable/actions/one-circle-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/eraser4-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/settings-symbolic.svg</file>
-
+    <file preprocess="xml-stripblanks">icons/scalable/actions/cross-large-circle-outline-symbolic.svg</file>
   </gresource>
 </gresources>
 
