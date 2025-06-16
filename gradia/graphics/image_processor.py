@@ -34,7 +34,7 @@ class ImageProcessor:
         padding: int = 5,
         aspect_ratio: Optional[str | float] = None,
         corner_radius: int = 2,
-        shadow_strength: float = 0.0
+        shadow_strength: float = 5
     ) -> None:
         self.background = background
         self.padding = padding

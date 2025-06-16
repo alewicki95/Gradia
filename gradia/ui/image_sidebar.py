@@ -90,6 +90,7 @@ class ImageSidebar(Adw.Bin):
     ) -> None:
         self.padding_adjustment.set_value(5)
         self.corner_radius_adjustment.set_value(2)
+        self.shadow_strength_scale.set_value(5)
 
         self.padding_row.connect("output", on_padding_changed)
         self.corner_radius_row.connect("output", on_corner_radius_changed)
