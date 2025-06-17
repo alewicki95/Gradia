@@ -142,7 +142,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.create_action("save", lambda *_: self.export_manager.save_to_file(), ["<Primary>s"], enabled=False)
         self.create_action("copy", lambda *_: self.export_manager.copy_to_clipboard(), ["<Primary>c"], enabled=False)
 
-        self.create_action("quit", lambda *_: self.close(), ["<Primary>q"])
+        self.create_action("quit", lambda *_: self.close(), ["<Primary>w"])
 
         self.create_action("undo", lambda *_: self.drawing_overlay.undo(), ["<Primary>z"])
         self.create_action("redo", lambda *_: self.drawing_overlay.redo(), ["<Primary><Shift>z"])
@@ -184,7 +184,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
             on_padding_changed=self.on_padding_changed,
             on_corner_radius_changed=self.on_corner_radius_changed,
             on_aspect_ratio_changed=self.on_aspect_ratio_changed,
-            on_shadow_strength_changed=self.on_shadow_strength_changed
+            on_shadow_strength_changed=self.on_shadow_strength_changed,
+            on_auto_balance_changed=self.on_auto_balance_changed
         )
 
         self.sidebar.set_size_request(self.SIDEBAR_WIDTH, -1)
@@ -249,6 +250,11 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     def on_shadow_strength_changed(self, value: int) -> None:
         self.processor.shadow_strength = value
         self._trigger_processing()
+
+    def on_auto_balance_changed(self, value: bool) -> None:
+        self.processor.auto_balance = value
+        self._trigger_processing()
+
 
     def _on_about_activated(self, _action: Gio.SimpleAction, _param: GObject.ParamSpec) -> None:
         about = create_about_dialog(version=self.version)

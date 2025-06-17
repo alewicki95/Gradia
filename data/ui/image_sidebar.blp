@@ -108,6 +108,15 @@ template $GradiaImageSidebar : Adw.Bin {
             };
           }
         }
+        Adw.ComboRow auto_balance_row {
+          title: _("Auto Balance");
+          activatable-widget: auto_balance_toggle;
+
+          [suffix]
+          Gtk.Switch auto_balance_toggle {
+            valign: center;
+          }
+        }
       }
 
       Adw.PreferencesGroup file_info_group {

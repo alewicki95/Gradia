@@ -35,15 +35,18 @@ class ImageProcessor:
         padding: int = 5,
         aspect_ratio: Optional[str | float] = None,
         corner_radius: int = 2,
-        shadow_strength: float = 5
+        shadow_strength: float = 5,
+        auto_balance: bool = False
     ) -> None:
         self.background: Optional[Background] = background
         self.padding: int = padding
         self.shadow_strength: float = shadow_strength
         self.aspect_ratio: Optional[str | float] = aspect_ratio
         self.corner_radius: int = corner_radius
+        self.auto_balance: bool = auto_balance
         self.source_img: Optional[Image.Image] = None
         self._loaded_image_path: Optional[str] = None
+        self._balanced_padding: Optional[dict] = None
 
         if image_path:
             self.set_image_path(image_path)
@@ -59,6 +62,8 @@ class ImageProcessor:
 
             self.source_img = self._load_and_downscale_image(image_path)
             self._loaded_image_path = image_path
+            self._balanced_padding = self.get_balanced_padding()
+            print(self._balanced_padding)
 
     def process(self) -> GdkPixbuf.Pixbuf:
         if not self.source_img:
@@ -66,6 +71,10 @@ class ImageProcessor:
 
         source_img = self.source_img.copy()
         width, height = source_img.size
+
+        if self.auto_balance and self._balanced_padding:
+            source_img = self._apply_auto_balance(source_img)
+            width, height = source_img.size
 
         if self.padding < 0:
             source_img = self._crop_image(source_img)
@@ -89,6 +98,80 @@ class ImageProcessor:
     """
     Private Methods
     """
+
+    def get_balanced_padding(self, tolerance: int = 5) -> dict[str, int | tuple[int, int, int, int]]:
+        if not self.source_img:
+            raise ValueError("No image loaded to analyze padding")
+
+        img = self.source_img.convert("RGBA")
+        pixels = img.load()
+        width, height = img.size
+
+        ref_color = pixels[0, 0]
+
+        def is_similar(px):
+            return all(abs(px[i] - ref_color[i]) <= tolerance for i in range(4))
+
+        def count_top():
+            for y in range(height):
+                if any(not is_similar(pixels[x, y]) for x in range(width)):
+                    return y
+            return height
+
+        def count_bottom():
+            for y in reversed(range(height)):
+                if any(not is_similar(pixels[x, y]) for x in range(width)):
+                    return height - 1 - y
+            return height
+
+        def count_left():
+            for x in range(width):
+                if any(not is_similar(pixels[x, y]) for y in range(height)):
+                    return x
+            return width
+
+        def count_right():
+            for x in reversed(range(width)):
+                if any(not is_similar(pixels[x, y]) for y in range(height)):
+                    return width - 1 - x
+            return width
+
+        top = count_top()
+        bottom = count_bottom()
+        left = count_left()
+        right = count_right()
+
+        max_padding = max(top, bottom, left, right)
+
+        return {
+            "top": max_padding - top,
+            "bottom": max_padding - bottom,
+            "left": max_padding - left,
+            "right": max_padding - right,
+            "color": ref_color
+        }
+
+    def _apply_auto_balance(self, image: Image.Image) -> Image.Image:
+        if not self._balanced_padding:
+            return image
+
+        width, height = image.size
+        top = self._balanced_padding["top"]
+        bottom = self._balanced_padding["bottom"]
+        left = self._balanced_padding["left"]
+        right = self._balanced_padding["right"]
+        bg_color = self._balanced_padding["color"]
+
+        new_width = width + left + right
+        new_height = height + top + bottom
+
+        balanced_image = Image.new("RGBA", (new_width, new_height), bg_color)
+
+        paste_x = left
+        paste_y = top
+        balanced_image.paste(image, (paste_x, paste_y), image)
+
+        return balanced_image
 
     def _get_percentage(self, value: float) -> float:
         return value / 100.0

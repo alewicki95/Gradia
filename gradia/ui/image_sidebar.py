@@ -34,24 +34,27 @@ class ImageSidebar(Adw.Bin):
 
     # `image_options_group` template children
     image_options_group = Gtk.Template.Child()
-    disable_button: Gtk.Switch = Gtk.Template.Child()  # Changed to Switch
+    disable_button: Gtk.Switch = Gtk.Template.Child()
     padding_row: Adw.SpinRow = Gtk.Template.Child()
     padding_adjustment: Gtk.Adjustment = Gtk.Template.Child()
     corner_radius_row: Adw.SpinRow = Gtk.Template.Child()
     corner_radius_adjustment: Gtk.Adjustment = Gtk.Template.Child()
     aspect_ratio_entry: Gtk.Entry = Gtk.Template.Child()
     shadow_strength_scale: Gtk.Scale = Gtk.Template.Child()
+    auto_balance_row: Adw.ComboRow = Gtk.Template.Child()
+    auto_balance_toggle: Gtk.Switch = Gtk.Template.Child()
 
     # `file_info_group` template children
     filename_row: Adw.ActionRow = Gtk.Template.Child()
     location_row: Adw.ActionRow = Gtk.Template.Child()
     processed_size_row: Adw.ActionRow = Gtk.Template.Child()
 
-    # Default values for reset functionality
+    # Default values
     DEFAULT_PADDING = 0
     DEFAULT_CORNER_RADIUS = 0
     DEFAULT_ASPECT_RATIO = ""
     DEFAULT_SHADOW_STRENGTH = 0
+    DEFAULT_AUTO_BALANCE = False
 
     def __init__(
         self,
@@ -60,6 +63,7 @@ class ImageSidebar(Adw.Bin):
         on_corner_radius_changed: Callable[[int], None],
         on_aspect_ratio_changed: Callable[[str], None],
         on_shadow_strength_changed: Callable[[int], None],
+        on_auto_balance_changed: Callable[[bool], None],
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
@@ -68,6 +72,7 @@ class ImageSidebar(Adw.Bin):
         self._on_corner_radius_changed = on_corner_radius_changed
         self._on_aspect_ratio_changed = on_aspect_ratio_changed
         self._on_shadow_strength_changed = on_shadow_strength_changed
+        self._on_auto_balance_changed = on_auto_balance_changed
 
         self.image_options_group_content = self.image_options_group.get_first_child().get_first_child().get_next_sibling()
 
@@ -75,6 +80,7 @@ class ImageSidebar(Adw.Bin):
         self._actual_corner_radius = 2
         self._actual_aspect_ratio = ""
         self._actual_shadow_strength = 5
+        self._actual_auto_balance = False
 
         self.background_selector_group.add(background_selector_widget)
         self._setup_image_options_group()
@@ -86,6 +92,7 @@ class ImageSidebar(Adw.Bin):
     """
     Setup Methods
     """
+
     def _setup_image_options_group(self) -> None:
         self.padding_adjustment.set_value(5)
         self.corner_radius_adjustment.set_value(2)
@@ -95,15 +102,18 @@ class ImageSidebar(Adw.Bin):
         self.corner_radius_row.connect("output", self._on_corner_radius_widget_changed)
         self.aspect_ratio_entry.connect("changed", self._on_aspect_ratio_widget_changed)
         self.shadow_strength_scale.connect("value-changed", self._on_shadow_strength_widget_changed)
+        self.auto_balance_toggle.connect("notify::active", self._on_auto_balance_widget_changed)
 
         self.padding_adjustment.connect("value-changed", self._on_actual_padding_changed)
         self.corner_radius_adjustment.connect("value-changed", self._on_actual_corner_radius_changed)
         self.aspect_ratio_entry.connect("changed", self._on_actual_aspect_ratio_changed)
         self.shadow_strength_scale.connect("value-changed", self._on_actual_shadow_strength_changed)
+        self.auto_balance_toggle.connect("notify::active", self._on_actual_auto_balance_changed)
 
     """
     Callbacks for tracking actual values
     """
+
     def _on_actual_padding_changed(self, adjustment: Gtk.Adjustment) -> None:
         if not self.disable_button.get_active():
             self._actual_padding = int(adjustment.get_value())
@@ -120,29 +130,29 @@ class ImageSidebar(Adw.Bin):
         if not self.disable_button.get_active():
             self._actual_shadow_strength = int(scale.get_value())
 
+    def _on_actual_auto_balance_changed(self, switch: Gtk.Switch, _param=None) -> None:
+        if not self.disable_button.get_active():
+            self._actual_auto_balance = switch.get_active()
+
     def _on_padding_widget_changed(self, spin_row: Adw.SpinRow) -> None:
-        if self.disable_button.get_active():
-            self._on_padding_changed(self.DEFAULT_PADDING)
-        else:
-            self._on_padding_changed(int(spin_row.get_value()))
+        self._on_padding_changed(self.DEFAULT_PADDING if self.disable_button.get_active()
+                                 else int(spin_row.get_value()))
 
     def _on_corner_radius_widget_changed(self, spin_row: Adw.SpinRow) -> None:
-        if self.disable_button.get_active():
-            self._on_corner_radius_changed(self.DEFAULT_CORNER_RADIUS)
-        else:
-            self._on_corner_radius_changed(int(spin_row.get_value()))
+        self._on_corner_radius_changed(self.DEFAULT_CORNER_RADIUS if self.disable_button.get_active()
+                                       else int(spin_row.get_value()))
 
     def _on_aspect_ratio_widget_changed(self, entry: Gtk.Entry) -> None:
-        if self.disable_button.get_active():
-            self._on_aspect_ratio_changed(self.DEFAULT_ASPECT_RATIO)
-        else:
-            self._on_aspect_ratio_changed(entry.get_text())
+        self._on_aspect_ratio_changed(self.DEFAULT_ASPECT_RATIO if self.disable_button.get_active()
+                                      else entry.get_text())
 
     def _on_shadow_strength_widget_changed(self, scale: Gtk.Scale) -> None:
-        if self.disable_button.get_active():
-            self._on_shadow_strength_changed(self.DEFAULT_SHADOW_STRENGTH)
-        else:
-            self._on_shadow_strength_changed(int(scale.get_value()))
+        self._on_shadow_strength_changed(self.DEFAULT_SHADOW_STRENGTH if self.disable_button.get_active()
+                                         else int(scale.get_value()))
+
+    def _on_auto_balance_widget_changed(self, switch: Gtk.Switch, _param=None) -> None:
+        self._on_auto_balance_changed(self.DEFAULT_AUTO_BALANCE if self.disable_button.get_active()
+                                      else switch.get_active())
 
     """
     Callbacks
@@ -151,18 +161,19 @@ class ImageSidebar(Adw.Bin):
         state = switch.get_active()
         self.image_options_group_content.set_sensitive(not state)
         if state:
-            # Default values
+            # Reset to defaults
             self._on_padding_changed(self.DEFAULT_PADDING)
             self._on_corner_radius_changed(self.DEFAULT_CORNER_RADIUS)
             self._on_aspect_ratio_changed(self.DEFAULT_ASPECT_RATIO)
             self._on_shadow_strength_changed(self.DEFAULT_SHADOW_STRENGTH)
+            self._on_auto_balance_changed(self.DEFAULT_AUTO_BALANCE)
         else:
-            # actual values
+            # Restore actual values
             self._on_padding_changed(self._actual_padding)
             self._on_corner_radius_changed(self._actual_corner_radius)
             self._on_aspect_ratio_changed(self._actual_aspect_ratio)
             self._on_shadow_strength_changed(self._actual_shadow_strength)
-
+            self._on_auto_balance_changed(self._actual_auto_balance)
     """
     Internal Methods
     """
