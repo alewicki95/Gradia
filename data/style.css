@@ -27,3 +27,7 @@ headerbar.desktop windowcontrols button:active image {
 .image-preset-button picture {
     border-radius: 9px;
 }
+
+.drawing_tool_entry_box {
+  border-bottom: 1px solid var(--secondary-sidebar-border-color);
+}
