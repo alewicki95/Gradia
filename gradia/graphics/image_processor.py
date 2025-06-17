@@ -63,7 +63,6 @@ class ImageProcessor:
             self.source_img = self._load_and_downscale_image(image_path)
             self._loaded_image_path = image_path
             self._balanced_padding = self.get_balanced_padding()
-            print(self._balanced_padding)
 
     def process(self) -> GdkPixbuf.Pixbuf:
         if not self.source_img:
