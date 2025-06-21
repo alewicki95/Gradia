@@ -9,9 +9,7 @@
     "--socket=fallback-x11",
     "--device=dri",
     "--socket=wayland",
-    "--filesystem=xdg-pictures",
-    "--env=LANG=nl_BE.UTF-8",
-    "--env=LC_ALL=nl_BE.UTF-8"
+    "--filesystem=xdg-pictures"
   ],
   "cleanup": [
     "/include",
