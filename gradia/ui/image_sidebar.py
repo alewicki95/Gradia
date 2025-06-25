@@ -77,26 +77,31 @@ class ImageSidebar(Adw.Bin):
             'auto_balance': on_auto_balance_changed
         }
 
-        self._saved_values = {
-            'padding': 5,
-            'corner_radius': 2,
-            'aspect_ratio': "",
-            'shadow_strength': 5,
-            'auto_balance': False
-        }
+        self.settings = Settings()
 
         self.image_options_group_content = self.image_options_group.get_first_child().get_first_child().get_next_sibling()
 
         self.background_selector_group.add(background_selector_widget)
         self._setup_widgets()
         self._setup_aspect_ratio_popover()
+        self._bind_settings()
         self._connect_signals()
 
     def _setup_widgets(self) -> None:
-        self.padding_adjustment.set_value(self._saved_values['padding'])
-        self.corner_radius_adjustment.set_value(self._saved_values['corner_radius'])
-        self.shadow_strength_scale.set_value(self._saved_values['shadow_strength'])
-        self.aspect_ratio_button.set_label(self._label_for_ratio_value(self._saved_values['aspect_ratio']))
+        self.padding_adjustment.set_value(self.settings.image_padding)
+        self.corner_radius_adjustment.set_value(self.settings.image_corner_radius)
+        self.shadow_strength_scale.set_value(self.settings.image_shadow_strength)
+        self.auto_balance_toggle.set_active(self.settings.image_auto_balance)
+        self.aspect_ratio_button.set_label(self._label_for_ratio_value(self.settings.image_aspect_ratio))
+
+    def _bind_settings(self) -> None:
+        self.settings.bind_switch(self.disable_button, "image-options-lock")
+        self.settings.bind_switch(self.auto_balance_toggle, "image-auto-balance")
+
+        self.settings.bind_spin_row(self.padding_row, "image-padding")
+        self.settings.bind_spin_row(self.corner_radius_row, "image-corner-radius")
+
+        self.settings.bind_scale(self.shadow_strength_scale, "image-shadow-strength")
 
     def _setup_aspect_ratio_popover(self) -> None:
         self.aspect_ratio_popover = Gtk.Popover()
@@ -163,6 +168,7 @@ class ImageSidebar(Adw.Bin):
 
     def _on_preset_ratio_selected(self, ratio: str) -> None:
         self.aspect_ratio_button.set_label(self._label_for_ratio_value(ratio))
+        self.settings.image_aspect_ratio = ratio
         self._handle_change('aspect_ratio', ratio)
         self.aspect_ratio_popover.popdown()
 
@@ -181,6 +187,7 @@ class ImageSidebar(Adw.Bin):
 
         custom_ratio = f"{width}:{height}"
         self.aspect_ratio_button.set_label(custom_ratio)
+        self.settings.image_aspect_ratio = custom_ratio
         self._handle_change('aspect_ratio', custom_ratio)
         self.aspect_ratio_popover.popdown()
 
@@ -191,15 +198,13 @@ class ImageSidebar(Adw.Bin):
         self.auto_balance_toggle.connect("notify::active", lambda w, _: self._handle_change('auto_balance', w.get_active()))
 
         self.disable_button.connect("toggled", self._on_disable_toggled)
-        Settings().bind_switch(self.disable_button, "image-options-lock")
-        self._on_disable_toggled(self.disable_button)  # Initialize state
+        self._on_disable_toggled(self.disable_button)
 
     def _handle_change(self, setting: str, value) -> None:
         if self.disable_button.get_active():
             defaults = {'padding': 0, 'corner_radius': 0, 'aspect_ratio': "", 'shadow_strength': 0, 'auto_balance': False}
             self._callbacks[setting](defaults[setting])
         else:
-            self._saved_values[setting] = value
             self._callbacks[setting](value)
 
     def _on_disable_toggled(self, switch: Gtk.Switch) -> None:
@@ -213,11 +218,11 @@ class ImageSidebar(Adw.Bin):
             self._callbacks['shadow_strength'](0)
             self._callbacks['auto_balance'](False)
         else:
-            self._callbacks['padding'](self._saved_values['padding'])
-            self._callbacks['corner_radius'](self._saved_values['corner_radius'])
-            self._callbacks['aspect_ratio'](self._saved_values['aspect_ratio'])
-            self._callbacks['shadow_strength'](self._saved_values['shadow_strength'])
-            self._callbacks['auto_balance'](self._saved_values['auto_balance'])
+            self._callbacks['padding'](self.settings.image_padding)
+            self._callbacks['corner_radius'](self.settings.image_corner_radius)
+            self._callbacks['aspect_ratio'](self.settings.image_aspect_ratio)
+            self._callbacks['shadow_strength'](self.settings.image_shadow_strength)
+            self._callbacks['auto_balance'](self.settings.image_auto_balance)
 
     def _label_for_ratio_value(self, value: str) -> str:
-        return PRESET_RATIOS_DICT.get(value, value)
+        return PRESET_RATIOS_DICT.get(value, value if value else "Auto")
