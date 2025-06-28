@@ -168,7 +168,7 @@ a:visited {
     color: #3584df;
 }
 
-a[href^="http"]:not([href*="gradia.alexandervanhee.be"])::after {
+a[href^="http"]:not([href*="gradia.alexandervanhee.be"]):not(.no-external)::after {
     content: "";
     display: inline-block;
     width: 0.6em;
