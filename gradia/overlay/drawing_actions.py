@@ -190,44 +190,66 @@ class ArrowAction(DrawingAction):
         self.end = (self.end[0] + dx, self.end[1] + dy)
 
 class TextAction(DrawingAction):
-    def __init__(self, position, text: str, image_bounds: tuple[int, int], settings):
+    PADDING_X = 4
+    PADDING_Y = 2
+
+    def __init__(self, position: tuple[float, float], text: str, image_bounds: tuple[int, int], settings):
+        self.settings = settings
+
         self.position = position
         self.text = text
         self.image_bounds = image_bounds
         self.color = settings.pen_color
         self.font_size = settings.font_size
         self.font_family = settings.font_family
+        self.background_color = settings.fill_color
 
-    def draw(self, cr, image_to_widget_coords, scale):
+    def draw(self, cr: cairo.Context, image_to_widget_coords, scale: float):
         if not self.text.strip():
             return
+
         x, y = image_to_widget_coords(*self.position)
-        cr.set_source_rgba(*self.color)
+
         layout = PangoCairo.create_layout(cr)
         font_desc = Pango.FontDescription()
-        font_desc.set_family(self.font_family)
-        font_desc.set_size(int(self.font_size * scale * Pango.SCALE))
+        font_desc.set_family(self.settings.font_family)
+        font_desc.set_size(int(self.settings.font_size * scale * Pango.SCALE))
         layout.set_font_description(font_desc)
         layout.set_text(self.text, -1)
+
         _, logical_rect = layout.get_extents()
         text_width = logical_rect.width / Pango.SCALE
         text_height = logical_rect.height / Pango.SCALE
-        cr.move_to(x - text_width / 2, y - text_height)
+
+        text_x = x - text_width / 2
+        text_y = y - text_height
+
+        if self.settings.fill_color and any(c > 0 or (len(self.settings.fill_color) > 3 and self.settings.fill_color[3] > 0) for c in self.settings.fill_color):
+            cr.set_source_rgba(*self.settings.fill_color)
+            cr.rectangle(
+                text_x - self.PADDING_X,
+                text_y - self.PADDING_Y,
+                text_width + 2 * self.PADDING_X,
+                text_height + 2 * self.PADDING_Y
+            )
+            cr.fill()
+
+        cr.set_source_rgba(*self.settings.pen_color)
+        cr.move_to(text_x, text_y)
         PangoCairo.show_layout(cr, layout)
 
-    def get_bounds(self):
+    def get_bounds(self) -> tuple[float, float, float, float]:
         if not self.text.strip():
             x, y = self.position
             return (x, y, x, y)
 
-        # Create a temporary surface and context to measure text
         temp_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)
         temp_cr = cairo.Context(temp_surface)
 
         layout = PangoCairo.create_layout(temp_cr)
         font_desc = Pango.FontDescription()
-        font_desc.set_family(self.font_family)
-        font_desc.set_size(int(self.font_size * Pango.SCALE))
+        font_desc.set_family(self.settings.font_family)
+        font_desc.set_size(int(self.settings.font_size * Pango.SCALE))
         layout.set_font_description(font_desc)
         layout.set_text(self.text, -1)
 
@@ -237,18 +259,22 @@ class TextAction(DrawingAction):
 
         reference_width = self.image_bounds[0]
         reference_height = self.image_bounds[1]
+
         text_width = text_width_px / reference_width
         text_height = text_height_px / reference_height
 
+        padding_x_ratio = self.PADDING_X / reference_width
+        padding_y_ratio = self.PADDING_Y / reference_height
+
         x, y = self.position
-        left = x - text_width / 2
-        right = x + text_width / 2
-        top = y - text_height
-        bottom = y
+        left = x - text_width / 2 - padding_x_ratio
+        right = x + text_width / 2 + padding_x_ratio
+        top = y - text_height - padding_y_ratio
+        bottom = y + padding_y_ratio
 
         return self.apply_padding((left, top, right, bottom))
 
-    def translate(self, dx, dy):
+    def translate(self, dx: float, dy: float):
         self.position = (self.position[0] + dx, self.position[1] + dy)
 
 class LineAction(ArrowAction):
