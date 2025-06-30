@@ -91,10 +91,10 @@ class DrawingAction:
         raise NotImplementedError
 
 class StrokeAction(DrawingAction):
-    def __init__(self, stroke, color, pen_size):
+    def __init__(self, stroke: list[tuple[float, float]], settings):
         self.stroke = stroke
-        self.color = color
-        self.pen_size = pen_size
+        self.color = settings.pen_color
+        self.pen_size = settings.pen_size
 
     def draw(self, cr, image_to_widget_coords, scale):
         """Drawing function using bezier curves."""
@@ -147,12 +147,12 @@ class StrokeAction(DrawingAction):
         self.stroke = [(x + dx, y + dy) for x, y in self.stroke]
 
 class ArrowAction(DrawingAction):
-    def __init__(self, start, end, color, arrow_head_size, width):
+    def __init__(self, start, end, settings):
         self.start = start
         self.end = end
-        self.color = color
-        self.arrow_head_size = arrow_head_size
-        self.width = width
+        self.color = settings.pen_color
+        self.arrow_head_size = settings.arrow_head_size
+        self.width = settings.pen_size
 
     def draw(self, cr, image_to_widget_coords, scale):
         start_x, start_y = image_to_widget_coords(*self.start)
@@ -190,13 +190,13 @@ class ArrowAction(DrawingAction):
         self.end = (self.end[0] + dx, self.end[1] + dy)
 
 class TextAction(DrawingAction):
-    def __init__(self, position, text, color, font_size,image_bounds, font_family="Sans"):
+    def __init__(self, position, text: str, image_bounds: tuple[int, int], settings):
         self.position = position
         self.text = text
-        self.color = color
-        self.font_size = font_size
-        self.font_family = font_family
         self.image_bounds = image_bounds
+        self.color = settings.pen_color
+        self.font_size = settings.font_size
+        self.font_family = settings.font_family
 
     def draw(self, cr, image_to_widget_coords, scale):
         if not self.text.strip():
@@ -260,12 +260,12 @@ class LineAction(ArrowAction):
         cr.stroke()
 
 class RectAction(DrawingAction):
-    def __init__(self, start, end, color, width, fill_color=None):
+    def __init__(self, start, end, settings):
         self.start = start
         self.end = end
-        self.color = color
-        self.width = width
-        self.fill_color = fill_color
+        self.color = settings.pen_color
+        self.width = settings.pen_size
+        self.fill_color = settings.fill_color
 
     def draw(self, cr, image_to_widget_coords, scale):
         x1, y1 = image_to_widget_coords(*self.start)
@@ -313,6 +313,11 @@ class CircleAction(RectAction):
         cr.stroke()
 
 class HighlighterAction(StrokeAction):
+    def __init__(self, stroke, settings):
+        self.stroke = stroke
+        self.color = settings.highlighter_color
+        self.pen_size = settings.highlighter_size
+
     def draw(self, cr, image_to_widget_coords, scale):
         if len(self.stroke) < 2:
             return
@@ -329,9 +334,9 @@ class HighlighterAction(StrokeAction):
         cr.set_line_cap(cairo.LineCap.ROUND)
 
 class CensorAction(RectAction):
-    def __init__(self, start, end, pixelation_level=8, background_pixbuf=None):
-        super().__init__(start, end, (0, 0, 0, 0), 0, None)
-        self.pixelation_level = pixelation_level
+    def __init__(self, start, end, background_pixbuf, settings):
+        super().__init__(start, end, settings)
+        self.pixelation_level = settings.pixelation_level
         self.background_pixbuf = background_pixbuf
 
     def set_background(self, pixbuf):
@@ -449,23 +454,20 @@ class CensorAction(RectAction):
         cr.restore()
 
 class NumberStampAction(DrawingAction):
-    def __init__(self, position, number, radius, fill_color, text_color=None):
+    def __init__(self, position, number, settings):
         super().__init__()
         self.position = position
         self.number = number
-        self.radius = radius
-        self.fill_color = fill_color
+        self.radius = settings.number_radius
+        self.fill_color = settings.pen_color
         self.creation_time = time.time()
+        r, g, b, a = self.fill_color
+        self.text_color = (1 - r, 1 - g, 1 - b, 1)
 
-        if text_color is None:
-            r, g, b, a = fill_color
-            self.text_color = (1 - r, 1 - g, 1 - b, 1)
-        else:
-            self.text_color = text_color
 
     def draw(self, cr, image_to_widget_coords, scale):
         x, y = image_to_widget_coords(*self.position)
-        r = self.radius * scale * 1000
+        r = self.radius * scale
 
         cr.set_source_rgba(*self.fill_color)
         cr.arc(x, y, r, 0, 2 * math.pi)
