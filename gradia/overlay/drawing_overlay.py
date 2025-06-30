@@ -22,45 +22,12 @@ from typing import Tuple, Optional
 
 from gradia.overlay.drawing_actions import *
 from gradia.overlay.text_entry_popover import TextEntryPopover
+from gradia.overlay.drawing_settings import DrawingSettings
 
 SELECTION_BOX_PADDING = 0
-DEFAULT_ARROW_HEAD_SIZE = 25.0
-DEFAULT_FONT_SIZE = 22.0
-DEFAULT_HIGHLIGHTER_SIZE = 12.0
-DEFAULT_PIXELATION_LEVEL = 8
-
-@dataclass
-class DrawingSettings:
-    pen_color: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 1.0)
-    pen_size: float = 3.0
-    fill_color: Optional[Tuple[float, float, float, float]] = None
-    highlighter_color: Tuple[float, float, float, float] = (1.0, 1.0, 0.0, 0.5)
-    highlighter_size: float = DEFAULT_HIGHLIGHTER_SIZE
-    arrow_head_size: float = DEFAULT_ARROW_HEAD_SIZE
-    font_size: float = DEFAULT_FONT_SIZE
-    font_family: str = "Sans"
-    number_radius: float = 20.0
-    pixelation_level: int = DEFAULT_PIXELATION_LEVEL
-    image_bounds: Tuple[int, int] = (1920, 1080)
-
-    def copy(self) -> 'DrawingSettings':
-        return DrawingSettings(
-            pen_color=self.pen_color,
-            pen_size=self.pen_size,
-            fill_color=self.fill_color,
-            highlighter_color=self.highlighter_color,
-            highlighter_size=self.highlighter_size,
-            arrow_head_size=self.arrow_head_size,
-            font_size=self.font_size,
-            font_family=self.font_family,
-            number_radius=self.number_radius,
-            pixelation_level=self.pixelation_level,
-            image_bounds=self.image_bounds
-        )
 
 class DrawingOverlay(Gtk.DrawingArea):
     __gtype_name__ = "GradiaDrawingOverlay"
-
     def __init__(self, **kwargs):
         super().__init__(can_focus=True, **kwargs)
 
@@ -151,7 +118,6 @@ class DrawingOverlay(Gtk.DrawingArea):
         paintable = self.picture_widget.get_paintable()
         if isinstance(paintable, Gdk.Texture):
             return Gdk.pixbuf_get_from_texture(paintable)
-
         return None
 
     def _setup_actions(self):
@@ -171,7 +137,6 @@ class DrawingOverlay(Gtk.DrawingArea):
 
         for i, action in enumerate(number_actions, 1):
             action.number = i
-
         self._next_number = len(number_actions) + 1
 
     def remove_selected_action(self) -> bool:
@@ -613,41 +578,12 @@ class DrawingOverlay(Gtk.DrawingArea):
 
             self.queue_draw()
 
-    def set_pen_color(self, r: float, g: float, b: float, a: float=1.0) -> None:
-        self.settings.pen_color = (r, g, b, a)
-
-    def set_fill_color(self, r: float, g: float, b: float, a: float=1) -> None:
-        self.settings.fill_color = (r, g, b, a)
-
-    def set_highlighter_color(self, r: float, g: float, b: float, a: float=1) -> None:
-        self.settings.highlighter_color = (r, g, b, a)
-
-    def set_pen_size(self, size: float) -> None:
-        self.settings.pen_size = max(1.0, size)
-
-    def set_arrow_head_size(self, size: float) -> None:
-        self.settings.arrow_head_size = max(5.0, size)
-
-    def set_font_size(self, size: float) -> None:
-        self.settings.font_size = max(8.0, size)
-
-    def set_font_family(self, family: str) -> None:
-        self.settings.font_family = family if family else "Sans"
-
-    def set_highlighter_size(self, size: float) -> None:
-        self.settings.highlighter_size = max(1.0, size)
-
-    def set_pixelation_level(self, level: int) -> None:
-        self.settings.pixelation_level = max(2, int(level))
-
     def set_drawing_visible(self, is_visible: bool) -> None:
         self.set_visible(is_visible)
 
     def get_drawing_visible(self) -> bool:
         return self.get_visible()
 
-    def set_number_radius(self, radius: float) -> None:
-        self.settings.number_radius = radius
 
 def render_actions_to_pixbuf(actions: list[DrawingAction], width: int, height: int) -> GdkPixbuf.Pixbuf | None:
     if width <= 0 or height <= 0:
