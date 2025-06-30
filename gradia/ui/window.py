@@ -158,6 +158,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.create_action("del-selected", lambda *_: self.drawing_overlay.remove_selected_action(), ["<Primary>x", "Delete"])
         self.create_action("font", lambda action, param: self.drawing_overlay.settings.set_font_family(param.get_string()), vt="s")
         self.create_action("pen-size", lambda action, param: self.drawing_overlay.settings.set_pen_size(param.get_double()), vt="d")
+        self.create_action("highlighter-size", lambda action, param: self.drawing_overlay.settings.set_highlighter_size(param.get_double()), vt="d")
         self.create_action("number-radius", lambda action, param: self.drawing_overlay.settings.set_number_radius(param.get_double()), vt="d")
 
         self.create_action("delete-screenshots", lambda *_: self._create_delete_screenshots_dialog(), enabled=False)

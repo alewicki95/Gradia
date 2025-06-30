@@ -459,10 +459,10 @@ class NumberStampAction(DrawingAction):
         self.position = position
         self.number = number
         self.radius = settings.number_radius
-        self.fill_color = settings.pen_color
+        self.fill_color = settings.fill_color
         self.creation_time = time.time()
         r, g, b, a = self.fill_color
-        self.text_color = (1 - r, 1 - g, 1 - b, 1)
+        self.text_color = settings.pen_color
 
 
     def draw(self, cr, image_to_widget_coords, scale):

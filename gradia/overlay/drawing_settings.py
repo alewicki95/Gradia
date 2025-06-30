@@ -32,6 +32,9 @@ class DrawingSettings:
     def set_pen_size(self, size: float) -> None:
         self.pen_size = max(1.0, size)
 
+    def set_highlighter_size(self, size: float) -> None:
+        self.highlighter_size = max(1.0, size)
+
     def set_arrow_head_size(self, size: float) -> None:
         self.arrow_head_size = max(5.0, size)
 
