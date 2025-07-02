@@ -21,6 +21,7 @@ gi.require_version("Soup", "3.0")
 from gi.repository import Gtk, Adw, GLib, Gdk, Soup, GdkPixbuf
 from gradia.backend.settings import Settings
 from gradia.backend.logger import Logger
+from gradia.constants import rel_ver
 
 import json
 
@@ -30,7 +31,7 @@ logger = Logger()
 class ProviderSelectionWindow(Adw.Window):
     __gtype_name__ = 'ProviderSelectionWindow'
 
-    PROVIDERS_DATA_URL = "https://gradia.alexandervanhee.be/upload-providers/provider-info.json"
+    PROVIDERS_DATA_URL = f"https://gradia.alexandervanhee.be/upload-providers/{rel_ver}.json"
 
     def __init__(self, parent_window: Adw.PreferencesWindow, on_provider_selected=None, **kwargs):
         super().__init__(
