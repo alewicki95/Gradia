@@ -19,6 +19,7 @@
 			<li>Adjust aspect ratios and padding to fit different platforms</li>
 			<li>Ten annotation modes, including text, arrow, and censor</li>
 			<li>Multiple ways to import and export screenshots</li>
+		  <li>Quick upload button for image services like Imgur</li>
 		</ul>
 		<!-- Package maintainers, please replace with correct command -->
 		<p>Want a keyboard shortcut on GNOME? Simply go to Settings → Keyboard → View and Customize Shortcuts → Custom Shortcuts.
@@ -41,6 +42,18 @@
 		<color type="primary" scheme_preference="dark">#073c6f</color>
 	</branding>
 	<releases>
+    <release version="1.6.0" date="2025-07-03">
+      <description translate="no">
+        <p>This feature release includes:</p>
+        <ul>
+          <li>Upload functionality: use one of the predefined providers or create your own.</li>
+          <li>A pop-up menu for easier aspect ratio selection.</li>
+          <li>An expanded font dropdown that includes all available system fonts.</li>
+          <li>Optional background colors for the text and stamp annotation tools.</li>
+          <li>Pressure sensitivity support for the highlighter tool.</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.5.0" date="2025-06-21">
       <description translate="no">
         <p>This feature release includes:</p>
