@@ -246,6 +246,7 @@ class PreferencesWindow(Adw.PreferencesWindow):
             self.provider_name.set_text(name)
             self.settings.provider_name = name
             self.settings.custom_export_command = command
+            self.parent_window.update_command_ready()
 
 
         window = ProviderSelectionWindow(parent_window=self, on_provider_selected=handle_selection)
