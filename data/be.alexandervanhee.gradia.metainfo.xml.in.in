@@ -162,19 +162,19 @@
 	</releases>
 	<screenshots>
 		<screenshot type="default">
-			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/07f353f1730129209372c56c6842770f6a060ee5/screenshots/showcase.webp</image>
+			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/58883291c3c0fafb48224b3f979e8d72072624cb/screenshots/showcase.webp</image>
 			<caption>Edited screenshot</caption>
 		</screenshot>
 		<screenshot>
-			<image>https://raw.githubusercontent.com/AlexanderVanhee/07f353f1730129209372c56c6842770f6a060ee5/screenshots/dark.webp</image>
+			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/58883291c3c0fafb48224b3f979e8d72072624cb/screenshots/dark.webp</image>
 			<caption>Edited picture</caption>
 		</screenshot>
 		<screenshot>
-			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/07f353f1730129209372c56c6842770f6a060ee5/screenshots/home.webp</image>
+			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/58883291c3c0fafb48224b3f979e8d72072624cb/screenshots/home.webp</image>
 			<caption>Startup view</caption>
 		</screenshot>
 		<screenshot>
-			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/07f353f1730129209372c56c6842770f6a060ee5/screenshots/element.webp</image>
+			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/58883291c3c0fafb48224b3f979e8d72072624cb/screenshots/element.webp</image>
 			<caption>UI element showcase</caption>
 		</screenshot>
 	</screenshots>
