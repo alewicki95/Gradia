@@ -42,7 +42,7 @@
 		<color type="primary" scheme_preference="dark">#073c6f</color>
 	</branding>
 	<releases>
-    <release version="1.6.1" date="2025-06-15">
+    <release version="1.6.1" date="2025-07-03">
 	    <description translate="no">
 		    <p>Minor update fixing the following issues:</p>
 		    <ul>
