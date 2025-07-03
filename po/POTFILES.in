@@ -14,6 +14,7 @@ gradia/ui/image_loaders.py
 gradia/ui/recent_picker.py
 gradia/ui/background_selector.py
 gradia/ui/drawing_tools_group.py
+gradia/ui/provider_selection_window.py
 gradia/overlay/drawing_overlay.py
 gradia/overlay/drawing_actions.py
 gradia/ui/preferences_window.py
