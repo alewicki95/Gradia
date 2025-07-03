@@ -42,6 +42,15 @@
 		<color type="primary" scheme_preference="dark">#073c6f</color>
 	</branding>
 	<releases>
+    <release version="1.6.1" date="2025-06-15">
+	    <description translate="no">
+		    <p>Minor update fixing the following issues:</p>
+		    <ul>
+          <li>Color options for annotations are not persisting between sessions.</li>
+          <li>Stamp hitbox is way too large.</li>
+		    </ul>
+	    </description>
+    </release>
     <release version="1.6.0" date="2025-07-03">
       <description translate="no">
         <p>This feature release includes:</p>
