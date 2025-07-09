@@ -22,7 +22,7 @@
       <img width="190" alt="Download on Flathub" src="https://flathub.org/api/badge?locale=en" />
     </a>
     <a href="https://snapcraft.io/gradia">
-      <img alt="gradia" src="https://snapcraft.io/gradia/badge.svg" />
+      <img alt="Get it from the Snap Store" src="https://snapcraft.io/en/dark/install.svg" />
     </a>
   </div>
 </div>
