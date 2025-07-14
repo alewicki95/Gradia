@@ -342,7 +342,7 @@ class SourceImageLoader(BaseImageLoader):
         location = _("Source")
 
         self._set_image_and_update_ui(image_path, filename, location)
-        self.window._show_notification(_("Source Snippit Generated!"))
+        self.window._show_notification(_("Source snippet Generated!"))
 
 class ImportManager:
     def __init__(self, window: Gtk.ApplicationWindow, temp_dir: str, app: Gtk.Application) -> None:

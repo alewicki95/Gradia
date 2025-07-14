@@ -355,7 +355,7 @@ class FakeWindowManager:
         self.header_bar = Adw.HeaderBar.new()
 
         self.title_entry = Gtk.Entry(xalign=0.5, focus_on_click=False)
-        self.title_entry.set_text(self.settings.source_snippit_title)
+        self.title_entry.set_text(self.settings.source_snippet_title)
         self.title_entry.set_halign(Gtk.Align.CENTER)
         self.title_entry.set_valign(Gtk.Align.CENTER)
         self.title_entry.set_width_chars(45)
@@ -366,7 +366,7 @@ class FakeWindowManager:
 
         def on_title_entry_changed(entry):
             new_title = entry.get_text()
-            self.settings.source_snippit_title = new_title
+            self.settings.source_snippet_title = new_title
 
         self.title_entry.connect("changed", on_title_entry_changed)
 
@@ -455,7 +455,7 @@ class SourceImageGeneratorWindow(Adw.Window):
 
     def __init__(self, parent_window, temp_dir=None, export_callback=None, **kwargs):
         super().__init__(
-            title=_("Source Snippits"),
+            title=_("Source Snippets"),
             modal=True,
             transient_for=parent_window,
             **kwargs
@@ -476,16 +476,16 @@ class SourceImageGeneratorWindow(Adw.Window):
         self._setup_initial_state()
         self._connect_signals()
 
-        self.settings.bind_switch(self.fake_window_button,"source-snippit-show-frame")
-        self.settings.bind_switch(self.line_numbers_button,"source-snippit-show-line-numbers")
+        self.settings.bind_switch(self.fake_window_button,"source-snippet-show-frame")
+        self.settings.bind_switch(self.line_numbers_button,"source-snippet-show-line-numbers")
 
     def _setup_ui(self):
         self.resizable_container = ResizableContainer()
         self.scroller.set_child(self.resizable_container)
-        self.source_view_manager.set_text(self.settings.source_snippit_code_text)
-        self.style_manager.set_current_style(self.settings.source_snippit_style_scheme)
+        self.source_view_manager.set_text(self.settings.source_snippet_code_text)
+        self.style_manager.set_current_style(self.settings.source_snippet_style_scheme)
         def update_settings(text):
-            self.settings.source_snippit_code_text = text
+            self.settings.source_snippet_code_text = text
 
         self.source_view_manager.set_text_changed_callback(update_settings)
 
@@ -494,7 +494,7 @@ class SourceImageGeneratorWindow(Adw.Window):
         languages = self.language_manager.get_languages()
         self.language_dropdown.set_model(Gtk.StringList.new(languages))
 
-        initial_language = self.settings.source_snippit_language
+        initial_language = self.settings.source_snippet_language
 
         if initial_language in languages:
             index = languages.index(initial_language)
@@ -580,7 +580,7 @@ class SourceImageGeneratorWindow(Adw.Window):
         if 0 <= index < len(languages):
             language = self.language_manager.get_language(languages[index])
             self.source_view_manager.set_language(language)
-            self.settings.source_snippit_language = languages[index]
+            self.settings.source_snippet_language = languages[index]
 
     def _on_style_scheme_changed(self, dropdown, _param):
         generic_styles = self.style_manager.get_generic_style_names()
@@ -588,7 +588,7 @@ class SourceImageGeneratorWindow(Adw.Window):
         if 0 <= index < len(generic_styles):
             generic_name = generic_styles[index]
             self.style_manager.set_current_style(generic_name)
-            self.settings.source_snippit_style_scheme = generic_name
+            self.settings.source_snippet_style_scheme = generic_name
             if self.fake_window_button.get_active():
                 scheme = self.style_manager.get_scheme()
                 self.fake_window_manager.update_header_colors(scheme)

@@ -111,29 +111,29 @@
       <summary>Whether to ask before running the export command.</summary>
     </key>
 
-    <key name="source-snippit-show-frame" type="b">
+    <key name="source-snippet-show-frame" type="b">
       <default>true</default>
-      <summary>Whether to have a window frame for the source snippit.</summary>
+      <summary>Whether to have a window frame for the source snippet.</summary>
     </key>
-    <key name="source-snippit-show-line-numbers" type="b">
+    <key name="source-snippet-show-line-numbers" type="b">
       <default>true</default>
-      <summary>Whether to show a number before each line of code of the source snippit.</summary>
+      <summary>Whether to show a number before each line of code of the source snippet.</summary>
     </key>
-    <key name="source-snippit-language" type="s">
+    <key name="source-snippet-language" type="s">
       <default>'c'</default>
-      <summary>Chosen programming language of the source snippit</summary>
+      <summary>Chosen programming language of the source snippet</summary>
     </key>
-    <key name="source-snippit-code-text" type="s">
+    <key name="source-snippet-code-text" type="s">
       <default>'// Gradia&#10;#include &lt;pthread.h&gt;&#10;#include &lt;stdio.h&gt;&#10;&#10;void* say_hello(void* arg) {&#10;    puts("Hello from thread!");&#10;    return NULL;&#10;}&#10;&#10;int main() {&#10;    pthread_t t;&#10;    pthread_create(&amp;t, NULL, say_hello, NULL);&#10;    pthread_join(t, NULL);&#10;}'</default>
-      <summary>Code of the source snippit</summary>
+      <summary>Code of the source snippet</summary>
     </key>
-      <key name="source-snippit-title" type="s">
+      <key name="source-snippet-title" type="s">
       <default>'My Code'</default>
-      <summary>Title bar text of the source snippit</summary>
+      <summary>Title bar text of the source snippet</summary>
     </key>
-    <key name="source-snippit-style-scheme" type="s">
+    <key name="source-snippet-style-scheme" type="s">
       <default>'Adwaita'</default>
-      <summary>Color scheme of the source snippit</summary>
+      <summary>Color scheme of the source snippet</summary>
     </key>
 
   </schema>
