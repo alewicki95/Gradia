@@ -55,6 +55,24 @@
       <summary>If images with same colored edges should be balanced</summary>
     </key>
 
+    <key name="background-mode" type="s">
+      <default>'gradient'</default>
+      <summary>The selected background mode</summary>
+    </key>
+    <key name="solid-state" type="s">
+      <default>"{\"color\": \"#4A90E2\", \"alpha\": 1.0}"</default>
+      <summary>Serialized state of the solid background</summary>
+    </key>
+
+    <key name="gradient-state" type="s">
+      <default>"{\"start_color\": \"#4A90E2\", \"end_color\": \"#50E3C2\", \"angle\": 0}"</default>
+      <summary>Serialized state of the gradient background</summary>
+    </key>
+    <key name="image-state" type="s">
+      <default>''</default>
+      <summary>Serialized state of the image background</summary>
+    </key>
+
    <key name="screenshot-subfolder" type="s">
       <default>'Screenshots'</default>
       <summary>Screenshot subdirectory</summary>

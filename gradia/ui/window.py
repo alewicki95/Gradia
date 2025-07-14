@@ -85,9 +85,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.import_manager: ImportManager = ImportManager(self, temp_dir, self.app)
 
         self.background_selector: BackgroundSelector = BackgroundSelector(
-            gradient=GradientBackground(),
-            solid=SolidBackground(),
-            image=ImageBackground(),
             callback=self._on_background_changed,
             window=self
         )
@@ -132,15 +129,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.create_action("paste", lambda *_: self.import_manager.load_from_clipboard(), ["<Primary>v"])
         self.create_action("screenshot", lambda *_: self.import_manager.take_screenshot(), ["<Primary>a"])
         self.create_action("open-path", lambda action, param: self.import_manager.load_from_file(param.get_string()), vt="s")
-
-        self.create_action(
-            "open-path-with-gradient",
-            lambda action, param: (
-                self.import_manager.load_from_file(param.unpack()[0]),
-                setattr(self.processor, 'background', GradientBackground.fromIndex(param.unpack()[1]))
-            ),
-            vt="(si)"
-        )
 
         self.create_action("save", lambda *_: self.export_manager.save_to_file(), ["<Primary>s"], enabled=False)
         self.create_action("copy", lambda *_: self.export_manager.copy_to_clipboard(), ["<Primary>c"], enabled=False)

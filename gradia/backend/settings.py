@@ -186,6 +186,38 @@ class Settings:
     def image_auto_balance(self, value: bool) -> None:
         self._settings.set_boolean("image-auto-balance", value)
 
+    @property
+    def background_mode(self) -> str:
+        return self._settings.get_string("background-mode")
+
+    @background_mode.setter
+    def background_mode(self, value: str) -> None:
+        self._settings.set_string("background-mode", value)
+
+    @property
+    def solid_state(self) -> str:
+        return self._settings.get_string("solid-state")
+
+    @solid_state.setter
+    def solid_state(self, value: str) -> None:
+        self._settings.set_string("solid-state", value)
+
+    @property
+    def gradient_state(self) -> str:
+        return self._settings.get_string("gradient-state")
+
+    @gradient_state.setter
+    def gradient_state(self, value: str) -> None:
+        self._settings.set_string("gradient-state", value)
+
+    @property
+    def image_state(self) -> str:
+        return self._settings.get_string("image-state")
+
+    @image_state.setter
+    def image_state(self, value: str) -> None:
+        self._settings.set_string("image-state", value)
+
     """
     Internal Methods
     """
