@@ -98,7 +98,7 @@ class BackgroundSelector(Adw.Bin):
         if self.current_mode == "image":
             self._notify_current()
 
-   """
+    """
     Internal Methods
     """
 

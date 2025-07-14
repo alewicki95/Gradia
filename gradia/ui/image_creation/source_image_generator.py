@@ -21,6 +21,7 @@ gi.require_version("GtkSource", "5")
 from gi.repository import Gtk, Adw, GtkSource, GLib, Gdk, Gio
 from gradia.constants import rootdir  # pyright: ignore
 from gradia.backend.logger import Logger
+from gradia.backend.settings import Settings
 import cairo
 import os
 import datetime
@@ -192,7 +193,9 @@ class SourceViewManager:
     def __init__(self):
         self.source_view = GtkSource.View.new()
         self.source_buffer = self.source_view.get_buffer()
+        self._text_changed_callback = None
         self._setup_source_view()
+        self._connect_signals()
 
     def _setup_source_view(self):
         self.source_view.set_top_margin(10)
@@ -205,8 +208,23 @@ class SourceViewManager:
         self.source_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
         self.source_view.set_show_line_numbers(True)
 
+    def _connect_signals(self):
+        self.source_buffer.connect('changed', self._on_text_changed)
+
+    def _on_text_changed(self, buffer):
+        if self._text_changed_callback:
+            text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
+            self._text_changed_callback(text)
+
     def set_text(self, text):
         self.source_buffer.set_text(text)
+
+    def get_text(self):
+        return self.source_buffer.get_text(
+            self.source_buffer.get_start_iter(),
+            self.source_buffer.get_end_iter(),
+            False
+        )
 
     def set_language(self, language):
         self.source_buffer.set_language(language)
@@ -217,9 +235,11 @@ class SourceViewManager:
     def set_show_line_numbers(self, show_numbers: bool):
         self.source_view.set_show_line_numbers(show_numbers)
 
+    def set_text_changed_callback(self, callback):
+        self._text_changed_callback = callback
+
     def get_view(self):
         return self.source_view
-
 
 class LanguageManager:
     def __init__(self):
@@ -318,6 +338,7 @@ class FakeWindowManager:
         self.header_bar = None
         self.title_entry = None
         self.current_style_provider = None
+        self.settings = Settings()
 
     def create_fake_window(self):
         if self.fake_window_container:
@@ -334,7 +355,7 @@ class FakeWindowManager:
         self.header_bar = Adw.HeaderBar.new()
 
         self.title_entry = Gtk.Entry(xalign=0.5, focus_on_click=False)
-        self.title_entry.set_text("My Code")
+        self.title_entry.set_text(self.settings.source_snippit_title)
         self.title_entry.set_halign(Gtk.Align.CENTER)
         self.title_entry.set_valign(Gtk.Align.CENTER)
         self.title_entry.set_width_chars(45)
@@ -342,6 +363,12 @@ class FakeWindowManager:
         self.title_entry.set_has_frame(False)
         self.title_entry.get_style_context().add_class("title")
         self.title_entry.get_style_context().add_class("title-entry")
+
+        def on_title_entry_changed(entry):
+            new_title = entry.get_text()
+            self.settings.source_snippit_title = new_title
+
+        self.title_entry.connect("changed", on_title_entry_changed)
 
         self.header_bar.set_title_widget(self.title_entry)
 
@@ -433,6 +460,7 @@ class SourceImageGeneratorWindow(Adw.Window):
             transient_for=parent_window,
             **kwargs
         )
+        self.settings = Settings()
 
         self.temp_dir = temp_dir
         self.export_callback = export_callback
@@ -448,21 +476,30 @@ class SourceImageGeneratorWindow(Adw.Window):
         self._setup_initial_state()
         self._connect_signals()
 
-        GLib.idle_add(lambda: self.set_focus(None))
+        self.settings.bind_switch(self.fake_window_button,"source-snippit-show-frame")
+        self.settings.bind_switch(self.line_numbers_button,"source-snippit-show-line-numbers")
 
     def _setup_ui(self):
         self.resizable_container = ResizableContainer()
         self.scroller.set_child(self.resizable_container)
-        self.source_view_manager.set_text(DEFAULT_TEXT)
+        self.source_view_manager.set_text(self.settings.source_snippit_code_text)
+        self.style_manager.set_current_style(self.settings.source_snippit_style_scheme)
+        def update_settings(text):
+            self.settings.source_snippit_code_text = text
+
+        self.source_view_manager.set_text_changed_callback(update_settings)
+
 
     def _setup_dropdowns(self):
         languages = self.language_manager.get_languages()
         self.language_dropdown.set_model(Gtk.StringList.new(languages))
 
-        if DEFAULT_LANGUAGE in languages:
-            index = languages.index(DEFAULT_LANGUAGE)
+        initial_language = self.settings.source_snippit_language
+
+        if initial_language in languages:
+            index = languages.index(initial_language)
             self.language_dropdown.set_selected(index)
-            language = self.language_manager.get_language(DEFAULT_LANGUAGE)
+            language = self.language_manager.get_language(initial_language)
             self.source_view_manager.set_language(language)
 
         generic_styles = self.style_manager.get_generic_style_names()
@@ -490,8 +527,19 @@ class SourceImageGeneratorWindow(Adw.Window):
         self.line_numbers_button.connect("notify::state", self._on_line_numbers_toggled)
         self.style_manager.connect_theme_changed(self._on_theme_changed)
 
+    def _safely_unparent_widget(self, widget):
+        parent = widget.get_parent()
+        if parent:
+            if hasattr(parent, 'remove'):
+                parent.remove(widget)
+            elif hasattr(parent, 'set_child'):
+                parent.set_child(None)
+
     def _update_view_mode(self):
         self.resizable_container.set_child_widget(None)
+
+        source_view = self.source_view_manager.get_view()
+        self._safely_unparent_widget(source_view)
 
         if self.fake_window_button.get_active():
             fake_window_frame = self.fake_window_manager.create_fake_window()
@@ -502,7 +550,7 @@ class SourceImageGeneratorWindow(Adw.Window):
             frame = Gtk.Frame(valign=Gtk.Align.START, margin_top=12)
             frame.add_css_class("window-border")
             frame.add_css_class("card")
-            frame.set_child(self.source_view_manager.get_view())
+            frame.set_child(source_view)
             self.resizable_container.set_child_widget(frame)
 
     def _update_line_numbers(self):
@@ -532,6 +580,7 @@ class SourceImageGeneratorWindow(Adw.Window):
         if 0 <= index < len(languages):
             language = self.language_manager.get_language(languages[index])
             self.source_view_manager.set_language(language)
+            self.settings.source_snippit_language = languages[index]
 
     def _on_style_scheme_changed(self, dropdown, _param):
         generic_styles = self.style_manager.get_generic_style_names()
@@ -539,12 +588,15 @@ class SourceImageGeneratorWindow(Adw.Window):
         if 0 <= index < len(generic_styles):
             generic_name = generic_styles[index]
             self.style_manager.set_current_style(generic_name)
+            self.settings.source_snippit_style_scheme = generic_name
             if self.fake_window_button.get_active():
                 scheme = self.style_manager.get_scheme()
                 self.fake_window_manager.update_header_colors(scheme)
 
     def _on_fake_window_toggled(self, switch, param_spec):
         if not switch.get_state():
+            source_view = self.source_view_manager.get_view()
+            self._safely_unparent_widget(source_view)
             self.fake_window_manager.destroy_fake_window()
         self._update_view_mode()
 

@@ -218,6 +218,38 @@ class Settings:
     def image_state(self, value: str) -> None:
         self._settings.set_string("image-state", value)
 
+    @property
+    def source_snippit_language(self) -> str:
+        return self._settings.get_string("source-snippit-language")
+
+    @source_snippit_language.setter
+    def source_snippit_language(self, value: str) -> None:
+        self._settings.set_string("source-snippit-language", value)
+
+    @property
+    def source_snippit_code_text(self) -> str:
+        return self._settings.get_string("source-snippit-code-text")
+
+    @source_snippit_code_text.setter
+    def source_snippit_code_text(self, value: str) -> None:
+        self._settings.set_string("source-snippit-code-text", value)
+
+    @property
+    def source_snippit_title(self) -> str:
+        return self._settings.get_string("source-snippit-title")
+
+    @source_snippit_title.setter
+    def source_snippit_title(self, value: str) -> None:
+        self._settings.set_string("source-snippit-title", value)
+
+    @property
+    def source_snippit_style_scheme(self) -> str:
+        return self._settings.get_string("source-snippit-style-scheme")
+
+    @source_snippit_style_scheme.setter
+    def source_snippit_style_scheme(self, value: str) -> None:
+        self._settings.set_string("source-snippit-style-scheme", value)
+
     """
     Internal Methods
     """
