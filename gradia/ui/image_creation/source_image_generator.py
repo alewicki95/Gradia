@@ -22,6 +22,7 @@ from gi.repository import Gtk, Adw, GtkSource, GLib, Gdk, Gio
 from gradia.constants import rootdir  # pyright: ignore
 from gradia.backend.logger import Logger
 from gradia.backend.settings import Settings
+from gradia.utils.timestamp_filename import TimestampedFilenameGenerator
 import cairo
 import os
 import datetime
@@ -559,7 +560,8 @@ class SourceImageGeneratorWindow(Adw.Window):
 
     def _on_export_clicked(self, _button):
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"sourceview_export_{timestamp}.png"
+
+        filename = TimestampedFilenameGenerator().generate(_("Source Snippit From %Y-%m-%d %H-%M-%S")) + ".png"
 
         if self.temp_dir:
             output_path = os.path.join(self.temp_dir, filename)

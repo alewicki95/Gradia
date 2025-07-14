@@ -22,6 +22,7 @@ gradia/ui/dialog/confirm_close_dialog.py
 gradia/ui/dialog/delete_screenshots_dialog.py
 gradia/ui/image_creation/source_image_generator.py
 gradia/app_constants.py
+gradia/utils/std_image_loader.py
 
 data/ui/selectors/gradient_selector.blp
 data/ui/selectors/image_selector.blp
