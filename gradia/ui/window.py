@@ -250,15 +250,15 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.processor.auto_balance = value
         self._trigger_processing()
 
+    def _on_about_activated(self, action: Gio.SimpleAction, param: GObject.ParamSpec) -> None:
+        about = AboutDialog(version=self.version)
+        about.show(self)
 
-    def _on_about_activated(self, _action: Gio.SimpleAction, _param: GObject.ParamSpec) -> None:
-        about = create_about_dialog(version=self.version)
-        about.present(self)
-
-    def _on_shortcuts_activated(self, _action: Gio.SimpleAction, _param: GObject.ParamSpec) -> None:
-        shortcuts = create_shortcuts_dialog(self)
-        shortcuts.connect("close-request", self._on_shortcuts_closed)
-        shortcuts.present()
+    def _on_shortcuts_activated(self, action: Gio.SimpleAction, param: GObject.ParamSpec) -> None:
+        shortcuts = ShortcutsDialog(parent=self)
+        shortcuts.create()
+        shortcuts.dialog.connect("close-request", self._on_shortcuts_closed)
+        shortcuts.dialog.present()
 
     def _on_shortcuts_closed(self, dialog: Adw.Window) -> bool:
         dialog.hide()
