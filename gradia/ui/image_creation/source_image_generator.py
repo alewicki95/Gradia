@@ -354,6 +354,7 @@ class FakeWindowManager:
         self.fake_window_container.get_style_context().add_class("adw-window")
 
         self.header_bar = Adw.HeaderBar.new()
+        self.header_bar.get_style_context().add_class("flat")
 
         self.title_entry = Gtk.Entry(xalign=0.5, focus_on_click=False)
         self.title_entry.set_text(self.settings.source_snippet_title)
@@ -418,8 +419,6 @@ class FakeWindowManager:
     def _extract_header_colors(self, style_scheme):
         scheme_id = style_scheme.get_id()
 
-        if scheme_id in ("Adwaita", "Adwaita-dark"):
-            return None, None
         text_style = style_scheme.get_style("text")
         bg_color = text_style.get_property("background")
         fg_color = text_style.get_property("foreground")

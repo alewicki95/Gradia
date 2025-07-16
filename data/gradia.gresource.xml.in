@@ -23,7 +23,7 @@
     <file>images/preset2.webp</file>
     <file>images/preset3.webp</file>
     <file>images/preset4.webp</file>
-    <file>images/preset5.webp</file>
+    <file>images/preset5.png</file>
     <file>images/preset6.webp</file>
   </gresource>
   <gresource prefix="/be/alexandervanhee/gradia">
