@@ -194,6 +194,7 @@ class SourceViewManager:
     def __init__(self):
         self.source_view = GtkSource.View.new()
         self.source_buffer = self.source_view.get_buffer()
+        self.source_buffer.set_highlight_matching_brackets(False)
         self._text_changed_callback = None
         self._setup_source_view()
         self._connect_signals()
@@ -563,9 +564,9 @@ class SourceImageGeneratorWindow(Adw.Window):
         show_line_numbers = self.line_numbers_button.get_active()
         self.source_view_manager.set_show_line_numbers(show_line_numbers)
 
+
     def _on_export_clicked(self, _button):
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-
         filename = TimestampedFilenameGenerator().generate(_("Source Snippit From %Y-%m-%d %H-%M-%S")) + ".png"
 
         if self.temp_dir:
@@ -575,11 +576,18 @@ class SourceImageGeneratorWindow(Adw.Window):
 
         widget_to_export = self._get_export_widget()
         widget_to_export.get_root().grab_focus()
-        exporter = SourceExporter(widget_to_export)
-        exporter.export_to_png(output_path)
 
-        self.export_callback(output_path)
-        self.close()
+        self.source_view_manager.get_view().get_style_context().add_class("no-highlights")
+        self.fake_window_manager.title_entry.get_style_context().add_class("no-highlights")
+
+        def do_export():
+            exporter = SourceExporter(widget_to_export)
+            exporter.export_to_png(output_path)
+            self.export_callback(output_path)
+            self.close()
+            return False
+
+        GLib.timeout_add(50, do_export)
 
     def _on_language_changed(self, dropdown, _param):
         languages = self.language_manager.get_languages()

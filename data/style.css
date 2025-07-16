@@ -111,6 +111,17 @@ frame.window-border {
   border: 0.5px solid rgba(0, 0, 0, 0.2);
 }
 
-.title-entry text selection {
+.title-entry.no-highlights text selection {
   background-color: transparent;
+}
+
+.sourceview.no-highlights text selection {
+    background-color: transparent;
+}
+
+.title-entry.no-highlights {
+  outline: none;
+  transition-property: none;
+  transition-duration: 0s;
+  transition-delay: 0s;
 }
