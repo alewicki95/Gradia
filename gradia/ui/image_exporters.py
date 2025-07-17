@@ -127,6 +127,7 @@ class FileDialogExporter(BaseImageExporter):
                 save_path = self._ensure_correct_extension(save_path, format_type)
                 logger.debug(f"Saving to: {save_path} as {format_type}")
                 self._save_image(save_path, format_type)
+                self.window.show_close_confirmation = False
                 self.window._show_notification(_("Image saved successfully"))
 
         dialog.destroy()
@@ -205,6 +206,7 @@ class ClipboardExporter(BaseImageExporter):
                 raise Exception("Failed to create temporary file for clipboard")
 
             copy_file_to_clipboard(temp_path)
+            self.window.show_close_confirmation = False
             self.window._show_notification(_("Image copied to clipboard"))
 
         except Exception as e:
@@ -273,7 +275,7 @@ class CommandLineExporter(BaseImageExporter):
             output_text = stdout.decode('utf-8').strip()
             if output_text:
                 logger.info("output: " + output_text)
-
+                self.window.show_close_confirmation = False
                 if self._is_valid_url(output_text):
                     copy_text_to_clipboard(output_text)
                     self._show_link_notification(output_text)

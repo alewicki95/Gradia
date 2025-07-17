@@ -80,6 +80,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.processed_path: Optional[str] = None
         self.processed_pixbuf: Optional[Gdk.Pixbuf] = None
         self.image_ready = False
+        self.show_close_confirmation = False
 
         self.export_manager: ExportManager = ExportManager(self, temp_dir)
         self.import_manager: ImportManager = ImportManager(self, temp_dir, self.app)
@@ -196,7 +197,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     Shutdown
     """
     def _on_close_request(self, window) -> bool:
-        if Settings().show_close_confirm_dialog and self.image_path:
+        if Settings().show_close_confirm_dialog and self.show_close_confirmation:
             confirm_dialog = ConfirmCloseDialog(self)
             confirm_dialog.show_dialog(self._on_confirm_close_ok)
             return True
