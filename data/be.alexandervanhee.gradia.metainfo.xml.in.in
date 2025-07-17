@@ -42,6 +42,19 @@
 		<color type="primary" scheme_preference="dark">#073c6f</color>
 	</branding>
 	<releases>
+      <release version="1.7.0" date="2025-07-17">
+        <description translate="no">
+            <p>This feature release includes:</p>
+            <ul>
+                <li>Added Source Snippets, making it easier for developers to showcase their code using Gradia.</li>
+                <li>Default export filenames are now more descriptive and include creation time.</li>
+                <li>The app no longer asks for confirmation on close if the current image has already been saved or exported.</li>
+                <li>Text and Stamp annotation tools now support optional outlines.</li>
+                <li>Images can now be rotated in 90-degree increments.</li>
+                <li>Color pickers for annotation tools are no longer modal, allowing accurate color selection within the app window.</li>
+            </ul>
+        </description>
+    </release>
     <release version="1.6.1" date="2025-07-03">
 	    <description translate="no">
 		    <p>Minor update fixing the following issues:</p>
