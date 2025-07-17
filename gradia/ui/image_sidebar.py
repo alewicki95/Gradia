@@ -15,7 +15,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Adw, GLib
+from typing import Callable
+from gi.repository import Gtk, Adw
 from gradia.ui.drawing_tools_group import DrawingToolsGroup
 from gradia.ui.background_selector import BackgroundSelector
 from gradia.constants import rootdir  # pyright: ignore
@@ -61,13 +62,27 @@ class ImageSidebar(Adw.Bin):
     def __init__(
         self,
         background_selector_widget: BackgroundSelector,
+        on_padding_changed: Callable[[int], None],
+        on_corner_radius_changed: Callable[[int], None],
+        on_aspect_ratio_changed: Callable[[str], None],
+        on_shadow_strength_changed: Callable[[int], None],
+        on_auto_balance_changed: Callable[[bool], None],
+        on_rotation_changed: Callable[[int], None],
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
 
-        self.settings = Settings()
+        self._callbacks = {
+            'padding': on_padding_changed,
+            'corner_radius': on_corner_radius_changed,
+            'aspect_ratio': on_aspect_ratio_changed,
+            'shadow_strength': on_shadow_strength_changed,
+            'auto_balance': on_auto_balance_changed,
+            'rotation': on_rotation_changed
+        }
 
-        self.app = Gtk.Application.get_default()
+        self.settings = Settings()
+        self._updating_widgets = False
 
         self.image_options_group_content = self.image_options_group.get_first_child().get_first_child().get_next_sibling()
 
@@ -85,7 +100,6 @@ class ImageSidebar(Adw.Bin):
         self.aspect_ratio_button.set_label(self._label_for_ratio_value(self.settings.image_aspect_ratio))
         self.rotation_adjustment.set_value(self.settings.image_rotation)
 
-
     def _bind_settings(self) -> None:
         self.settings.bind_switch(self.disable_button, "image-options-lock")
         self.settings.bind_switch(self.auto_balance_toggle, "image-auto-balance")
@@ -93,7 +107,6 @@ class ImageSidebar(Adw.Bin):
         self.settings.bind_spin_row(self.corner_radius_row, "image-corner-radius")
         self.settings.bind_scale(self.shadow_strength_scale, "image-shadow-strength")
         self.settings.bind_spin_row(self.rotation_row, "image-rotation")
-
 
     def _setup_aspect_ratio_popover(self) -> None:
         self.aspect_ratio_popover = Gtk.Popover()
@@ -161,7 +174,7 @@ class ImageSidebar(Adw.Bin):
     def _on_preset_ratio_selected(self, ratio: str) -> None:
         self.aspect_ratio_button.set_label(self._label_for_ratio_value(ratio))
         self.settings.image_aspect_ratio = ratio
-        self._trigger_action('aspect-ratio-changed', GLib.Variant.new_string(ratio))
+        self._handle_change('aspect_ratio', ratio)
         self.aspect_ratio_popover.popdown()
 
     def _on_custom_ratio_set(self, button: Gtk.Button) -> None:
@@ -180,50 +193,80 @@ class ImageSidebar(Adw.Bin):
         custom_ratio = f"{width}:{height}"
         self.aspect_ratio_button.set_label(custom_ratio)
         self.settings.image_aspect_ratio = custom_ratio
-        self._trigger_action('aspect-ratio-changed', GLib.Variant.new_string(custom_ratio))
+        self._handle_change('aspect_ratio', custom_ratio)
         self.aspect_ratio_popover.popdown()
 
     def _connect_signals(self) -> None:
-        self.padding_row.connect("output", lambda w: self._trigger_action('padding-changed', GLib.Variant.new_int32(int(w.get_value()))))
-        self.corner_radius_row.connect("output", lambda w: self._trigger_action('corner-radius-changed', GLib.Variant.new_int32(int(w.get_value()))))
-        self.shadow_strength_scale.connect("value-changed", lambda w: self._trigger_action('shadow-strength-changed', GLib.Variant.new_int32(int(w.get_value()))))
-        self.auto_balance_toggle.connect("notify::active", lambda w, _: self._trigger_action('auto-balance-changed', GLib.Variant.new_boolean(w.get_active())))
-
+        self.padding_row.connect("output", self._on_padding_changed)
+        self.corner_radius_row.connect("output", self._on_corner_radius_changed)
+        self.shadow_strength_scale.connect("value-changed", self._on_shadow_strength_changed)
+        self.auto_balance_toggle.connect("notify::active", self._on_auto_balance_changed)
+        self.rotation_row.connect("notify::value", self._on_rotation_value_changed)
         self.disable_button.connect("toggled", self._on_disable_toggled)
         self._on_disable_toggled(self.disable_button)
 
-        self.rotation_row.connect("notify::value", self._on_rotation_value_changed)
+    def _on_padding_changed(self, widget) -> None:
+        if not self._updating_widgets:
+            self._handle_change('padding', int(widget.get_value()))
+
+    def _on_corner_radius_changed(self, widget) -> None:
+        if not self._updating_widgets:
+            self._handle_change('corner_radius', int(widget.get_value()))
+
+    def _on_shadow_strength_changed(self, widget) -> None:
+        if not self._updating_widgets:
+            self._handle_change('shadow_strength', int(widget.get_value()))
+
+    def _on_auto_balance_changed(self, widget, pspec) -> None:
+        if not self._updating_widgets:
+            self._handle_change('auto_balance', widget.get_active())
 
     def _on_rotation_value_changed(self, spin_row: Adw.SpinRow, pspec) -> None:
-        value = spin_row.get_value()
-        snapped_value = round(value / 90) * 90
-        if value != snapped_value:
-            spin_row.set_value(snapped_value)
-        self._trigger_action("rotation-changed", GLib.Variant.new_int32(snapped_value))
+        if not self._updating_widgets:
+            value = spin_row.get_value()
+            snapped_value = round(value / 90) * 90
+            if value != snapped_value:
+                self._updating_widgets = True
+                spin_row.set_value(snapped_value)
+                self._updating_widgets = False
+            self._handle_change('rotation', snapped_value)
 
-    def _trigger_action(self, action_name: str, parameter: GLib.Variant) -> None:
-        """Helper method to trigger application actions"""
-        if self.app:
-            self.app.activate_action(action_name, parameter)
+    def _handle_change(self, setting: str, value) -> None:
+        if self.disable_button.get_active():
+            defaults = {
+                'padding': 0,
+                'corner_radius': 0,
+                'aspect_ratio': "",
+                'shadow_strength': 0,
+                'auto_balance': False,
+                'rotation': 0
+            }
+            self._callbacks[setting](defaults[setting])
+        else:
+            self._callbacks[setting](value)
 
     def _on_disable_toggled(self, switch: Gtk.Switch) -> None:
         is_disabled = switch.get_active()
+        self._updating_widgets = True
+
         self.image_options_group_content.set_sensitive(not is_disabled)
 
         if is_disabled:
-            self._trigger_action('padding-changed', GLib.Variant.new_int32(0))
-            self._trigger_action('corner-radius-changed', GLib.Variant.new_int32(0))
-            self._trigger_action('aspect-ratio-changed', GLib.Variant.new_string(""))
-            self._trigger_action('shadow-strength-changed', GLib.Variant.new_int32(0))
-            self._trigger_action('auto-balance-changed', GLib.Variant.new_boolean(False))
-            self._trigger_action("rotation-changed", GLib.Variant.new_int32(0))
+            self._callbacks['padding'](0)
+            self._callbacks['corner_radius'](0)
+            self._callbacks['aspect_ratio']("")
+            self._callbacks['shadow_strength'](0)
+            self._callbacks['auto_balance'](False)
+            self._callbacks['rotation'](0)
         else:
-            self._trigger_action('padding-changed', GLib.Variant.new_int32(self.settings.image_padding))
-            self._trigger_action('corner-radius-changed', GLib.Variant.new_int32(self.settings.image_corner_radius))
-            self._trigger_action('aspect-ratio-changed', GLib.Variant.new_string(self.settings.image_aspect_ratio))
-            self._trigger_action('shadow-strength-changed', GLib.Variant.new_int32(self.settings.image_shadow_strength))
-            self._trigger_action('auto-balance-changed', GLib.Variant.new_boolean(self.settings.image_auto_balance))
-            self._trigger_action("rotation-changed", GLib.Variant.new_int32(self.settings.image_rotation))
+            self._callbacks['padding'](self.settings.image_padding)
+            self._callbacks['corner_radius'](self.settings.image_corner_radius)
+            self._callbacks['aspect_ratio'](self.settings.image_aspect_ratio)
+            self._callbacks['shadow_strength'](self.settings.image_shadow_strength)
+            self._callbacks['auto_balance'](self.settings.image_auto_balance)
+            self._callbacks['rotation'](self.settings.image_rotation)
+
+        self._updating_widgets = False
 
     def _label_for_ratio_value(self, value: str) -> str:
         return PRESET_RATIOS_DICT.get(value, value if value else "Auto")
