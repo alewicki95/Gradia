@@ -46,6 +46,8 @@
     <file preprocess="xml-stripblanks">icons/scalable/actions/line-large-circle-outline-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/share-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/house-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/crop-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/crop-reset-symbolic.svg</file>
   </gresource>
 </gresources>
 

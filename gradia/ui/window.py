@@ -137,6 +137,9 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
         self.create_action("quit", lambda *_: self.close(), ["<Primary>w"])
 
+        self.create_action("crop", lambda *_: self.image_bin.on_toggle_crop(), ["<Primary>r"])
+        self.create_action("reset-crop", lambda *_: self.image_bin.reset_crop_selection(), ["<Primary><Shift>r"])
+
         self.create_action("undo", lambda *_: self.drawing_overlay.undo(), ["<Primary>z"])
         self.create_action("redo", lambda *_: self.drawing_overlay.redo(), ["<Primary><Shift>z"])
         self.create_action("clear", lambda *_: self.drawing_overlay.clear_drawing())
@@ -155,7 +158,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.create_action("delete-screenshots", lambda *_: self._create_delete_screenshots_dialog(), enabled=False)
 
         self.create_action("preferences", self._on_preferences_activated, ['<primary>comma'])
-        self.create_action("toggle-utility-pane", self._on_toggle_utility_pane_activated, ['F9'])
 
         self.create_action("set-screenshot-folder",  lambda action, param: self.set_screenshot_subfolder(param.get_string()), vt="s")
 
@@ -166,6 +168,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
     def _setup_image_stack(self) -> None:
         self.image_bin = ImageStack()
+        self.image_bin.connect("crop-toggled", self._on_crop_toggled)
         self.image_stack = self.image_bin.stack
         self.picture = self.image_bin.picture
         self.drawing_overlay = self.image_bin.drawing_overlay
@@ -445,8 +448,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         Settings().screenshot_subfolder = subfolder
         self.welcome_content.refresh_recent_picker()
 
-    def _on_toggle_utility_pane_activated(self, action: Gio.SimpleAction, param) -> None:
-        self.split_view.set_show_sidebar(not self.split_view.get_show_sidebar())
+    def _on_crop_toggled(self, image_stack: ImageStack, enabled: bool) -> None:
+        self.split_view.set_show_sidebar(not enabled)
 
 
     def _run_custom_command(self) -> None:
