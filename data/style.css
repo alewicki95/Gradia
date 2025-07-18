@@ -125,3 +125,8 @@ frame.window-border {
   transition-duration: 0s;
   transition-delay: 0s;
 }
+
+.rotate.circular {
+  min-width: 30px;
+  min-height: 30px;
+}
