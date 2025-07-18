@@ -64,6 +64,7 @@ class ImageStack(Adw.Bin):
         self.crop_overlay.set_can_target(False)
         self.drawing_overlay.set_picture_reference(self.picture)
         self.drawing_overlay.set_erase_selected_revealer(self.erase_selected_revealer)
+        self.right_controls_revealer.set_reveal_child(True)
 
         # Setup image drop controller
         self.drop_target.set_gtypes([Gio.File])
