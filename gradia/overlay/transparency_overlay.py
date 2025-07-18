@@ -40,7 +40,7 @@ class TransparencyBackground(Gtk.Widget):
         dark_gray.blue = 0.7
         dark_gray.alpha = 1.0
 
-        start_x = int(offset_x)
+        start_x = int(offset_x) +1
         start_y = int(offset_y)
         end_x = int(offset_x + display_width)
         end_y = int(offset_y + display_height)

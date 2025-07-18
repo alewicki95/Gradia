@@ -42,6 +42,15 @@
 		<color type="primary" scheme_preference="dark">#073c6f</color>
 	</branding>
 	<releases>
+      <release version="1.7.1" date="2025-07-18">
+        <description translate="no">
+            <p>This minor release includes:</p>
+            <ul>
+                <li>A fix for where the disable button state would not persist between sessions.</li>
+                <li>A cropping tool for trimming an image before export.</li>
+            </ul>
+        </description>
+      </release>
       <release version="1.7.0" date="2025-07-17">
         <description translate="no">
             <p>This feature release includes:</p>
@@ -184,23 +193,23 @@
 	</releases>
 	<screenshots>
 		<screenshot type="default">
-			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/f4c68720be387ca3d052351871a05954518fddac/screenshots/showcase.webp</image>
+			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/e6494a703012893752950ccf7cf206701cb132b9/screenshots/showcase.webp</image>
 			<caption>Edited screenshot</caption>
 		</screenshot>
 		<screenshot>
-			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/f4c68720be387ca3d052351871a05954518fddac/screenshots/dark.webp</image>
+			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/e6494a703012893752950ccf7cf206701cb132b9/screenshots/dark.webp</image>
 			<caption>Edited picture</caption>
 		</screenshot>
 		<screenshot>
-			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/f4c68720be387ca3d052351871a05954518fddac/screenshots/home.webp</image>
+			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/e6494a703012893752950ccf7cf206701cb132b9/screenshots/home.webp</image>
 			<caption>Startup view</caption>
 		</screenshot>
 		<screenshot>
-			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/f4c68720be387ca3d052351871a05954518fddac/screenshots/element.webp</image>
+			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/e6494a703012893752950ccf7cf206701cb132b9/screenshots/element.webp</image>
 			<caption>UI element showcase</caption>
 		</screenshot>
 		<screenshot>
-			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/f4c68720be387ca3d052351871a05954518fddac/screenshots/snippits.webp</image>
+			<image>https://raw.githubusercontent.com/AlexanderVanhee/Gradia/e6494a703012893752950ccf7cf206701cb132b9/screenshots/snippits.webp</image>
 			<caption>Source Snippits</caption>
 		</screenshot>
 	</screenshots>
