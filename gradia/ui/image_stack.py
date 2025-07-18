@@ -38,7 +38,6 @@ class ImageStack(Adw.Bin):
     transparency_background: TransparencyBackground = Gtk.Template.Child()
     crop_overlay: CropOverlay = Gtk.Template.Child()
 
-    controls_box: Gtk.Box = Gtk.Template.Child()
     erase_selected_revealer: Gtk.Revealer = Gtk.Template.Child()
     right_controls_revealer: Gtk.Revealer = Gtk.Template.Child()
 
@@ -65,6 +64,7 @@ class ImageStack(Adw.Bin):
         self.drawing_overlay.set_picture_reference(self.picture)
         self.drawing_overlay.set_erase_selected_revealer(self.erase_selected_revealer)
         self.right_controls_revealer.set_reveal_child(True)
+        self.reset_crop_revealer.set_visible(False)
 
         # Setup image drop controller
         self.drop_target.set_gtypes([Gio.File])

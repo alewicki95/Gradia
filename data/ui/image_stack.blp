@@ -54,100 +54,98 @@ template $GradiaImageStack : Adw.Bin {
           }
 
           [overlay]
-          Gtk.Box controls_box {
+          Gtk.Box left_controls_container {
             orientation: horizontal;
             spacing: 6;
-            halign: fill;
+            halign: start;
             valign: end;
             margin-bottom: 12;
             margin-start: 12;
+            hexpand: false;
+
+            Gtk.Button crop_button {
+              icon-name: "crop-symbolic";
+              tooltip-text: _("Toggle Crop Mode");
+              action-name: "app.crop";
+              styles [
+                "osd",
+                "circular"
+              ]
+            }
+
+            Gtk.Revealer reset_crop_revealer {
+              transition-type: crossfade;
+              transition-duration: 300;
+
+              Gtk.Button reset_crop_button {
+                icon-name: "crop-reset-symbolic";
+                tooltip-text: _("Reset Crop Selection");
+                action-name: "app.reset-crop";
+                styles [
+                  "osd",
+                  "circular"
+                ]
+              }
+            }
+
+            Gtk.Revealer erase_selected_revealer {
+              transition-type: crossfade;
+              transition-duration: 300;
+
+              Gtk.Button back_button {
+                icon-name: "eraser4-symbolic";
+                tooltip-text: _("Erase Selected");
+                action-name: "app.del-selected";
+                styles [
+                  "osd",
+                  "circular"
+                ]
+              }
+            }
+          }
+
+          [overlay]
+          Gtk.Revealer right_controls_revealer {
+            transition-type: crossfade;
+            transition-duration: 300;
+            halign: end;
+            valign: end;
+            margin-bottom: 12;
             margin-end: 12;
 
-            Gtk.Box left_controls_box {
+            Gtk.Box right_controls_box {
               orientation: horizontal;
               spacing: 6;
-              hexpand: true;
-              halign: start;
+              halign: end;
 
-              Gtk.Button crop_button {
-                icon-name: "crop-symbolic";
-                tooltip-text: _("Toggle Crop Mode");
-                action-name: "app.crop";
+              Gtk.Button undo_button {
+                icon-name: "edit-undo-symbolic";
+                tooltip-text: _("Undo");
+                action-name: "app.undo";
                 styles [
                   "osd",
                   "circular"
                 ]
               }
 
-              Gtk.Revealer reset_crop_revealer {
-                transition-type: crossfade;
-                transition-duration: 300;
-
-                Gtk.Button reset_crop_button {
-                  icon-name: "crop-reset-symbolic";
-                  tooltip-text: _("Reset Crop Selection");
-                  action-name: "app.reset-crop";
-                  styles [
-                    "osd",
-                    "circular"
-                  ]
-                }
+              Gtk.Button redo_button {
+                icon-name: "edit-redo-symbolic";
+                tooltip-text: _("Redo");
+                action-name: "app.redo";
+                styles [
+                  "osd",
+                  "circular"
+                ]
               }
 
-              Gtk.Revealer erase_selected_revealer {
-                transition-type: crossfade;
-                transition-duration: 300;
-
-                Gtk.Button back_button {
-                  icon-name: "eraser4-symbolic";
-                  tooltip-text: _("Erase Selected");
-                  action-name: "app.del-selected";
-                  styles [
-                    "osd",
-                    "circular"
-                  ]
-                }
-              }
-            }
-
-            Gtk.Revealer right_controls_revealer {
-              transition-type: crossfade;
-              transition-duration: 300;
-
-              Gtk.Box right_controls_box {
-                orientation: horizontal;
-                spacing: 6;
-                halign: end;
-
-                Gtk.Button undo_button {
-                  icon-name: "edit-undo-symbolic";
-                  tooltip-text: _("Undo");
-                  action-name: "app.undo";
-                  styles [
-                    "osd",
-                    "circular"
-                  ]
-                }
-
-                Gtk.Button redo_button {
-                  icon-name: "edit-redo-symbolic";
-                  tooltip-text: _("Redo");
-                  action-name: "app.redo";
-                  styles [
-                    "osd",
-                    "circular"
-                  ]
-                }
-
-                Gtk.Button reset_button {
-                  icon-name: "user-trash-symbolic";
-                  tooltip-text: _("Clear All");
-                  action-name: "app.clear";
-                  styles [
-                    "osd",
-                    "circular"
-                  ]
-                }
+              Gtk.Button reset_button {
+                icon-name: "user-trash-symbolic";
+                tooltip-text: _("Clear All");
+                action-name: "app.clear";
+                styles [
+                  "osd",
+                  "circular"
+                ]
               }
             }
           }

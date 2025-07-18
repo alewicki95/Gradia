@@ -172,7 +172,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.image_stack = self.image_bin.stack
         self.picture = self.image_bin.picture
         self.drawing_overlay = self.image_bin.drawing_overlay
-        self.controls_overlay = self.image_bin.controls_box
 
     def _setup_sidebar(self) -> None:
         self.sidebar = ImageSidebar(
