@@ -84,6 +84,7 @@ template $GradiaImageSidebar : Adw.Bin {
           Gtk.MenuButton aspect_ratio_button {
             label: "Auto";
             valign: center;
+            styles ["flat-dropdown"]
           }
         }
 
@@ -107,14 +108,9 @@ template $GradiaImageSidebar : Adw.Bin {
             };
           }
         }
-        Adw.ComboRow auto_balance_row {
+        Adw.SwitchRow auto_balance_toggle {
           title: _("Auto Balance");
-          activatable-widget: auto_balance_toggle;
-
-          [suffix]
-          Gtk.Switch auto_balance_toggle {
-            valign: center;
-          }
+          activatable: true;
         }
 
         Adw.ActionRow rotation_row {

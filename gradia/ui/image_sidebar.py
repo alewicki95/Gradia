@@ -50,7 +50,6 @@ class ImageSidebar(Adw.Bin):
     corner_radius_adjustment: Gtk.Adjustment = Gtk.Template.Child()
     aspect_ratio_button: Gtk.Button = Gtk.Template.Child()
     shadow_strength_scale: Gtk.Scale = Gtk.Template.Child()
-    auto_balance_row: Adw.ComboRow = Gtk.Template.Child()
     auto_balance_toggle: Gtk.Switch = Gtk.Template.Child()
     filename_row: Adw.ActionRow = Gtk.Template.Child()
     location_row: Adw.ActionRow = Gtk.Template.Child()

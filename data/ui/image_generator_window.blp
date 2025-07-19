@@ -33,6 +33,7 @@ template $SourceviewtestWindow : Adw.Window {
               DropDown language_dropdown {
                 valign: center;
                 enable-search: true;
+                styles ["flat-dropdown"]
               }
             }
             Adw.ActionRow style_scheme_row {
@@ -41,6 +42,7 @@ template $SourceviewtestWindow : Adw.Window {
               [suffix]
               MenuButton style_scheme_button {
                 valign: center;
+                styles ["flat-dropdown"]
                 tooltip-text: _("Choose a color scheme for syntax highlighting");
                 popover: Popover style_scheme_popover {
                   child: FlowBox style_scheme_flowbox {

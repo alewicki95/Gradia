@@ -145,3 +145,8 @@ frame.window-border {
 GtkSourceStyleSchemePreview .selected {
     border: 5px solid @accent_bg_color;
 }
+
+.flat-dropdown > button:not(:checked):not(:hover) {
+  background: transparent;
+  box-shadow: none;
+}

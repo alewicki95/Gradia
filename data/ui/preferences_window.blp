@@ -13,12 +13,17 @@ template $GradiaPreferencesWindow : Adw.PreferencesWindow {
 
     Adw.PreferencesGroup location_group {
       title: _("Recent Screenshots");
-      description: _("Configure which subfolder of Pictures to use to display recent screenshots on the home page");
 
       Adw.ExpanderRow folder_expander {
         title: _("Select Folder");
-        subtitle: _("Click to change folder");
+        subtitle: _("What folder to use for the home page");
         show-enable-switch: false;
+
+        [suffix]
+        Gtk.Label folder_label {
+        label: _("Test");
+        styles ["dim-label"]
+        }
       }
     }
 
@@ -30,38 +35,30 @@ template $GradiaPreferencesWindow : Adw.PreferencesWindow {
         subtitle: _("Default format for saved screenshots");
       }
 
-      Adw.ComboRow save_compress_combo {
+      Adw.SwitchRow compress_switch {
         title: _("Compress image");
         subtitle: _("On supported formats");
-        [suffix]
-        Gtk.Switch compress_switch {
-          tooltip-text: _("Compress images to reduce file size");
-          valign: center;
-        }
+        tooltip-text: _("Compress images to reduce file size");
+        activatable: true;
       }
 
-      Adw.ComboRow confirm_close_combo {
+      Adw.SwitchRow confirm_close_switch {
         title: _("Confirm on close");
         subtitle: _("Ask for confirmation before closing the app");
-        [suffix]
-        Gtk.Switch confirm_close_switch {
-          tooltip-text: _("Ask for confirmation before closing the app");
-          valign: center;
-        }
+        tooltip-text: _("Ask for confirmation before closing the app");
+        activatable: true;
       }
 
     }
 
   Adw.PreferencesGroup {
     title: _("Screenshot Management");
-    Adw.ComboRow {
+
+    Adw.SwitchRow delete_screenshot_switch {
       title: _("Trash screenshots on close");
       subtitle: _("Automatically move screenshots taken from within the app to trash");
-      [suffix]
-      Gtk.Switch delete_screenshot_switch {
-        tooltip-text: _("Trash screenshots on app close");
-        valign: center;
-      }
+      tooltip-text: _("Trash screenshots on app close");
+      activatable: true;
     }
   }
 
@@ -77,31 +74,32 @@ template $GradiaPreferencesWindow : Adw.PreferencesWindow {
       valign: center;
     }
 
-    Adw.ComboRow  {
+    Adw.ActionRow provider_row {
       title: _("Provider");
+      activatable: true;
+      activated => $on_choose_provider_clicked();
+
       [suffix]
-      Gtk.Box{
+      Gtk.Box {
+        spacing: 6;
+        valign: center;
+
         Gtk.Label provider_name {
-        margin-end: 10;
-        styles ["bold"]
+          label: _("None Selected");
+          styles ["dim-label"]
         }
-        Gtk.Button  {
-          label: _("Select");
-          tooltip-text: _("Choose a provider");
-          valign: center;
-          clicked => $on_choose_provider_clicked();
+
+        Gtk.Image {
+          icon-name: "go-next-symbolic";
         }
       }
     }
 
-    Adw.ComboRow confirm_upload_combo {
+    Adw.SwitchRow confirm_upload_switch {
       title: _("Confirm on upload");
       subtitle: _("Ask for confirmation before running the upload command");
-      [suffix]
-      Gtk.Switch confirm_upload_switch {
-        tooltip-text: _("Ask for confirmation before running the upload command");
-        valign: center;
-      }
+      tooltip-text: _("Ask for confirmation before running the upload command");
+      activatable: true;
     }
 
   }
