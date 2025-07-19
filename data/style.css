@@ -130,3 +130,18 @@ frame.window-border {
   min-width: 30px;
   min-height: 30px;
 }
+
+ GtkSourceStyleSchemePreview {
+  border-radius: 6px;
+}
+
+ GtkSourceStyleSchemePreview > image {
+    background-color: @accent_bg_color;
+    border-radius:999px;
+    margin-right:5px;
+    margin-bottom:5px;
+}
+
+GtkSourceStyleSchemePreview .selected {
+    border: 5px solid @accent_bg_color;
+}

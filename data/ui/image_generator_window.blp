@@ -1,5 +1,6 @@
 using Gtk 4.0;
 using Adw 1;
+using GtkSource 5;
 
 template $SourceviewtestWindow : Adw.Window {
   title: _("Source Snippets");
@@ -7,11 +8,9 @@ template $SourceviewtestWindow : Adw.Window {
   default-height: 600;
   width-request: 625;
   height-request: 400;
-
   content: Adw.ToolbarView toolbar_view {
     [top]
     Adw.HeaderBar {}
-
     [top]
     Adw.Clamp settings_clamp {
       margin-top: 24;
@@ -38,10 +37,29 @@ template $SourceviewtestWindow : Adw.Window {
             }
             Adw.ActionRow style_scheme_row {
               title: _("Style Scheme");
-              activatable-widget: style_scheme_dropdown;
+              activatable-widget: style_scheme_button;
               [suffix]
-              DropDown style_scheme_dropdown {
+              MenuButton style_scheme_button {
                 valign: center;
+                tooltip-text: _("Choose a color scheme for syntax highlighting");
+                popover: Popover style_scheme_popover {
+                  child: FlowBox style_scheme_flowbox {
+                      max-children-per-line: 3;
+                    };
+                };
+                child: Box {
+                  orientation: horizontal;
+                  spacing: 6;
+                  Label style_scheme_label {
+                    label: _("Default");
+                    hexpand: true;
+                    halign: start;
+                  }
+                  Image {
+                    icon-name: "pan-down-symbolic";
+                    styles ["dim-label"]
+                  }
+                };
               }
             }
           }
@@ -78,14 +96,11 @@ template $SourceviewtestWindow : Adw.Window {
         }
       };
     }
-
     content:
       ScrolledWindow scroller {
         vexpand: true;
         hexpand: true;
       };
-
-
     [bottom]
     Box button_container {
       orientation: horizontal;
