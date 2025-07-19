@@ -125,48 +125,64 @@ template $GradiaPreferencesWindow : Adw.PreferencesWindow {
         }
 
         Adw.PreferencesGroup interactive_group {
+          margin-bottom:12;
           title: _("Interactive Screenshot");
           description: _("Allows you to select an area to screenshot");
 
-          Gtk.Box interactive_row {
-            spacing: 12;
-
-            Gtk.Entry interactive_entry {
-              editable: false;
-              hexpand: true;
-              styles ["monospace"]
+            Adw.ActionRow interactive_row {
+              margin-top:2;
+              margin-bottom:2;
+              margin-start:2;
+              margin-end:2;
+              child: Gtk.Box {
+                spacing: 4;
+                Gtk.Entry interactive_entry {
+                  editable: false;
+                  hexpand: true;
+                  text: "";
+                  styles ["monospace","flat"]
+                }
+                Separator {}
+                Gtk.Button interactive_copy_btn {
+                  icon-name: "edit-copy-symbolic";
+                  tooltip-text: _("Copy to clipboard");
+                  valign: center;
+                  styles ["flat"]
+                }
+              };
+              }
             }
-
-            Gtk.Button interactive_copy_btn {
-              icon-name: "edit-copy-symbolic";
-              tooltip-text: _("Copy to clipboard");
-              valign: center;
-            }
-          }
         }
 
         Adw.PreferencesGroup fullscreen_group {
           title: _("Full Screen Screenshot");
           description: _("Takes a screenshot of all screens instantly");
 
-          Gtk.Box fullscreen_row {
-            spacing: 12;
-
-            Gtk.Entry fullscreen_entry {
-              editable: false;
-              hexpand: true;
-              styles ["monospace"]
-            }
-
-            Gtk.Button fullscreen_copy_btn {
-              icon-name: "edit-copy-symbolic";
-              tooltip-text: _("Copy to clipboard");
-              valign: center;
-            }
-          }
+          Adw.ActionRow fullscreen_row {
+            margin-top:2;
+            margin-bottom:2;
+            margin-start:2;
+            margin-end:2;
+            child: Gtk.Box {
+              spacing: 4;
+              Gtk.Entry fullscreen_entry {
+                editable: false;
+                hexpand: true;
+                text: "";
+                styles ["monospace","flat"]
+              }
+              Separator {}
+              Gtk.Button fullscreen_copy_btn {
+                icon-name: "edit-copy-symbolic";
+                tooltip-text: _("Copy to clipboard");
+                valign: center;
+                styles ["flat"]
+              }
+            };
         }
 
         Gtk.Label final_label {
+          margin-top:12;
           label: _("5. Assign a keyboard shortcut of your choice (<tt>Ctrl + Print</tt> should be free by default).");
           use-markup: true;
           wrap: true;
