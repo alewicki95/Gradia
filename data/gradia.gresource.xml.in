@@ -19,6 +19,11 @@
     <file>help.txt</file>
   </gresource>
   <gresource prefix="/be/alexandervanhee/gradia">
+    <file>source-styles/builder-dark.xml</file>
+    <file>source-styles/ubuntu.xml</file>
+    <file>source-styles/vscode-dark.xml</file>
+  </gresource>
+  <gresource prefix="/be/alexandervanhee/gradia">
     <file>images/preset1.webp</file>
     <file>images/preset2.webp</file>
     <file>images/preset3.webp</file>
