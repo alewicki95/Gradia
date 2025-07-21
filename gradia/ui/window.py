@@ -121,7 +121,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     def _setup_actions(self) -> None:
         self.create_action("shortcuts", self._on_shortcuts_activated)
         self.create_action("about", self._on_about_activated)
-        self.create_action('quit', lambda *_: self.app.quit(), ['<primary>q'])
+        self.create_action("quit", lambda *_: self.close(),  ['<primary>q', '<primary>w'])
         self.create_action("shortcuts", self._on_shortcuts_activated,  ['<primary>question'])
 
         self.create_action("open", lambda *_: self.import_manager.open_file_dialog(), ["<Primary>o"])
@@ -134,8 +134,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.create_action("save", lambda *_: self.export_manager.save_to_file(), ["<Primary>s"], enabled=False)
         self.create_action("copy", lambda *_: self.export_manager.copy_to_clipboard(), ["<Primary>c"], enabled=False)
         self.create_action("command", lambda *_: self._run_custom_command(), ["<Primary>m"], enabled=False)
-
-        self.create_action("quit", lambda *_: self.close(), ["<Primary>w"])
 
         self.create_action("crop", lambda *_: self.image_bin.on_toggle_crop(), ["<Primary>r"])
         self.create_action("reset-crop", lambda *_: self.image_bin.reset_crop_selection(), ["<Primary><Shift>r"])

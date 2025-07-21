@@ -418,6 +418,15 @@ class SourceImageGeneratorWindow(Adw.Window):
         self.settings.bind_switch(self.fake_window_button, "source-snippet-show-frame")
         self.settings.bind_switch(self.line_numbers_button, "source-snippet-show-line-numbers")
 
+        shortcut_controller = Gtk.ShortcutController()
+        shortcut = Gtk.Shortcut.new(
+            Gtk.ShortcutTrigger.parse_string("Escape"),
+            Gtk.ShortcutAction.parse_string("action(window.close)")
+        )
+        shortcut_controller.add_shortcut(shortcut)
+        self.add_controller(shortcut_controller)
+
+
     def _setup_ui(self):
         self.resizable_container = ResizableContainer()
         self.scroller.set_child(self.resizable_container)
@@ -477,11 +486,13 @@ class SourceImageGeneratorWindow(Adw.Window):
             GLib.idle_add(self._force_popover_sizing)
 
     def _force_popover_sizing(self):
+        self.style_scheme_popover.set_opacity(0)
         self.style_scheme_popover.popup()
         GLib.idle_add(self._hide_popover_after_sizing)
         return False
 
     def _hide_popover_after_sizing(self):
+        self.style_scheme_popover.set_opacity(1)
         self.style_scheme_popover.popdown()
         return False
 
