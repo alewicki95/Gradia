@@ -32,7 +32,7 @@ class CropOverlay(Gtk.Widget):
         self.crop_width = 1.0
         self.crop_height = 1.0
 
-        self.handle_size = 12
+        self.handle_size = 18
         self.edge_grab_distance = 8
         self.dragging_handle = None
         self.dragging_edge = None
@@ -150,29 +150,27 @@ class CropOverlay(Gtk.Widget):
 
     def _draw_corner_handles(self, snapshot: Gtk.Snapshot, x: float, y: float, w: float, h: float) -> None:
         handle_size = self.handle_size
-        half = handle_size / 2.0
-
+        radius = handle_size / 2.0
         corners = [
             (x, y),
             (x + w, y),
             (x + w, y + h),
             (x, y + h),
         ]
-
         color = Gdk.RGBA(red=1, green=1, blue=1, alpha=1.0)
-
         for cx, cy in corners:
             rect = Graphene.Rect()
             rect.init(
-                cx - half,
-                cy - half,
+                cx - radius,
+                cy - radius,
                 handle_size,
                 handle_size
             )
+            rounded_rect = Gsk.RoundedRect()
+            rounded_rect.init_from_rect(rect, radius)
+            snapshot.push_rounded_clip(rounded_rect)
             snapshot.append_color(color, rect)
-
-
-
+            snapshot.pop()
 
 
     def _get_handle_at_point(self, x: float, y: float) -> str | None:
