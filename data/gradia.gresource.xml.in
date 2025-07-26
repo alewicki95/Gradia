@@ -32,6 +32,8 @@
     <file>images/preset6.webp</file>
   </gresource>
   <gresource prefix="/be/alexandervanhee/gradia">
+    <file preprocess="xml-stripblanks">icons/scalable/actions/color-picker-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/color-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/image-alt-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/arrow1-top-right-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/clipboard-symbolic.svg</file>
