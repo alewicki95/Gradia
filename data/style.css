@@ -203,3 +203,6 @@ GtkSourceStyleSchemePreview .selected {
   color: @accent_fg_color;
 }
 
+.osd.pill {
+   padding: 2px 20px;
+}
