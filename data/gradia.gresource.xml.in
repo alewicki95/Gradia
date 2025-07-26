@@ -47,6 +47,7 @@
     <file preprocess="xml-stripblanks">icons/scalable/actions/screenshooter-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/marker-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/checkerboard-big-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/checkerboard-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/one-circle-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/eraser4-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/settings-symbolic.svg</file>

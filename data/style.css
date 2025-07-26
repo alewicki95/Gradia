@@ -29,7 +29,7 @@ headerbar.desktop windowcontrols button:active image {
 }
 
 .drawing_tool_entry_box {
-  border-bottom: 1px solid var(--secondary-sidebar-border-color);
+  border-bottom: 1px solid var(--card-shade-color);
 }
 
 /* Gradient Preview Box */

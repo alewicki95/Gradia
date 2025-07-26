@@ -63,6 +63,7 @@ class QuickColorPicker(Gtk.Box):
 
         self.main_icon = Gtk.Image()
         self.main_icon.set_icon_size(Gtk.IconSize.NORMAL)
+        self.main_icon.set_pixel_size(20)
         self.main_button.set_child(self.main_icon)
 
         self.popover = Gtk.Popover()
@@ -135,7 +136,7 @@ class QuickColorPicker(Gtk.Box):
 
     def _apply_color_to_icon(self, icon, color):
         if color.alpha == 0.0:
-            icon.set_from_icon_name('checkerboard-big-symbolic')
+            icon.set_from_icon_name('checkerboard-symbolic')
             css_provider = Gtk.CssProvider()
             css = """
             image {
