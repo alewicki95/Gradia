@@ -110,7 +110,7 @@ class QuickColorPicker(Gtk.Box):
         more_colors_icon.set_icon_size(Gtk.IconSize.NORMAL)
         more_colors_button.set_child(more_colors_icon)
         more_colors_button.connect('clicked', self._on_more_colors_clicked)
-        more_colors_button.set_tooltip_text('More colors...')
+        more_colors_button.set_tooltip_text(_('More colors...'))
         popover_box.append(more_colors_button)
 
         self.popover.set_child(popover_box)
@@ -198,8 +198,7 @@ class QuickColorPicker(Gtk.Box):
         self.popover.popdown()
 
         color_dialog = Gtk.ColorDialog()
-        color_dialog.set_title("Choose Color")
-        color_dialog.set_modal(True)
+        color_dialog.set_title(_("Choose Color"))
         color_dialog.set_with_alpha(self.with_alpha)
 
         toplevel = self.get_root()
