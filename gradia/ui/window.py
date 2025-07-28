@@ -258,22 +258,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self._trigger_processing()
 
     def _on_about_activated(self, action: Gio.SimpleAction, param: GObject.ParamSpec) -> None:
-        background = self.background_selector.get_current_background()
-        primary_color = None
-        secondary_color = None
-
-        if isinstance(background, GradientBackground):
-            primary_color = background.start_color
-            secondary_color = background.end_color
-        elif isinstance(background, SolidBackground) and background.alpha == 1:
-            primary_color = background.color
-            secondary_color = background.color
-
-        about = AboutDialog(
-            version=self.version,
-            primary_color=primary_color,
-            secondary_color=secondary_color
-        )
+        about = AboutDialog(version=self.version)
         about.show(self)
 
     def _on_shortcuts_activated(self, action: Gio.SimpleAction, param: GObject.ParamSpec) -> None:
