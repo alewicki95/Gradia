@@ -37,6 +37,20 @@
 		<color type="primary" scheme_preference="dark">#073c6f</color>
 	</branding>
 	<releases>
+      <release version="1.8.0" date="2025-07-31">
+        <description translate="no">
+            <p>This feature release includes:</p>
+            <ul>
+                <li>A redesigned gradient and solid color selector.</li>
+                <li>Support for up to 5 movable steps in a gradient.</li>
+                <li>Radial and conic gradient support.</li>
+                <li>Quick color selection for annotation tools.</li>
+                <li>A reworked preferences flow.</li>
+                <li>Improved drag-and-drop support for loading from URLs.</li>
+                <li>A fix for an issue where changing the padding didn't correctly move annotations with the image.</li>
+            </ul>
+        </description>
+      </release>
       <release version="1.7.1" date="2025-07-18">
         <description translate="no">
             <p>This minor release includes:</p>
