@@ -37,7 +37,7 @@ class AngleSelector(Gtk.Widget):
     def __init__(self):
         super().__init__()
         self._outer_radius = 40
-        self._inner_radius = 22.5
+        self._inner_radius = 20
         self._handle_radius = 9
         self._dragging = False
         self.set_size_request(100, 100)
@@ -136,26 +136,38 @@ class AngleSelector(Gtk.Widget):
         width = allocation.width
         height = allocation.height
         cx, cy = width / 2, height / 2
+
         context = self.get_style_context()
-        text_color = context.lookup_color("window_fg_color")[1]
+        success, text_color = context.lookup_color("theme_fg_color")
+        if not success:
+            text_color = Gdk.RGBA(red=0.0, green=0.0, blue=0.0, alpha=1.0)
+
         self._draw_circle_border(snapshot, cx, cy, self._outer_radius, text_color, 4.0)
+
         hx, hy = self._get_handle_position()
         self._draw_filled_circle(snapshot, hx, hy, self._handle_radius, text_color)
 
     def _draw_filled_circle(self, snapshot, cx, cy, radius, color):
         rect = Graphene.Rect()
         rect.init(cx - radius, cy - radius, radius * 2, radius * 2)
+
         rounded_rect = Gsk.RoundedRect()
         rounded_rect.init_from_rect(rect, radius)
+
         snapshot.push_rounded_clip(rounded_rect)
         snapshot.append_color(color, rect)
         snapshot.pop()
 
     def _draw_circle_border(self, snapshot, cx, cy, radius, color, line_width):
         rect = Graphene.Rect()
-        rect.init(0, 0, self.get_allocated_width(), self.get_allocated_height())
-        cairo_ctx = snapshot.append_cairo(rect)
-        cairo_ctx.set_source_rgba(color.red, color.green, color.blue, color.alpha)
-        cairo_ctx.set_line_width(line_width)
-        cairo_ctx.arc(cx, cy, radius, 0, 2 * math.pi)
-        cairo_ctx.stroke()
+        rect.init(cx - radius, cy - radius, radius * 2, radius * 2)
+
+        rounded_rect = Gsk.RoundedRect()
+        rounded_rect.init_from_rect(rect, radius)
+
+        widths = [line_width] * 4
+        colors = [color] * 4
+
+        snapshot.append_node(
+            Gsk.BorderNode.new(rounded_rect, widths, colors)
+        )
