@@ -77,7 +77,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.version: str = version
         self.file_path: Optional[str] = file_path
         self.image_path: Optional[str] = None
-        self.processed_path: Optional[str] = None
         self.processed_pixbuf: Optional[Gdk.Pixbuf] = None
         self.image_ready = False
         self.show_close_confirmation = False
@@ -367,10 +366,10 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         try:
             if self.image_path is not None:
                 self.processor.set_image_path(self.image_path)
-                pixbuf: Gdk.Pixbuf = self.processor.process()
+                pixbuf, true_width, true_height = self.processor.process()
+                self._update_processed_image_size(true_width, true_height)
                 self.processed_pixbuf = pixbuf
-                self.processed_path = os.path.join(self.temp_dir, self.TEMP_PROCESSED_FILENAME)
-                pixbuf.savev(self.processed_path, "png", [], [])
+
             else:
                 print("No image path set for processing.")
 
@@ -382,22 +381,13 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         if self.processed_pixbuf:
             paintable: Gdk.Paintable = Gdk.Texture.new_for_pixbuf(self.processed_pixbuf)
             self.picture.set_paintable(paintable)
-            self._update_processed_image_size()
             self._hide_loading_state()
         return False
 
-    def _update_processed_image_size(self) -> None:
-        try:
-            if self.processed_pixbuf:
-                width: int = self.processed_pixbuf.get_width()
-                height: int = self.processed_pixbuf.get_height()
-                size_str: str = f"{width}×{height}"
-                self.sidebar.processed_size_row.set_subtitle(size_str)
-            else:
-                self.sidebar.processed_size_row.set_subtitle(_("Unknown"))
-        except Exception as e:
-            self.sidebar.processed_size_row.set_subtitle(_("Error"))
-            print(f"Error getting processed image size: {e}")
+    def _update_processed_image_size(self, width, height) -> None:
+        size_str: str = f"{width}×{height}"
+        self.sidebar.processed_size_row.set_subtitle(size_str)
+
 
     def _show_notification(self, message: str,action_label: str | None = None,action_callback: Callable[[], None] | None = None) -> None:
         if self.toast_overlay:
