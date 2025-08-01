@@ -35,13 +35,13 @@ logging = Logger()
 class GradiaApp(Adw.Application):
     __gtype_name__ = "GradiaApp"
 
-    def __init__(self, version: str):
+    def __init__(self, version: str, start_screenshot: str = None):
         super().__init__(
             application_id=app_id,
             flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE | Gio.ApplicationFlags.HANDLES_OPEN
         )
         self.version = version
-        self.screenshot_flags: Optional[Xdp.ScreenshotFlags] = None
+        self.start_screenshot = start_screenshot
         self.temp_dirs: list[str] = []
         self._stdin_image_path: Optional[str] = None
 
@@ -55,7 +55,6 @@ class GradiaApp(Adw.Application):
             self._print_help()
             return 0
 
-        self.screenshot_flags = self._parse_screenshot_flag(args)
         files_to_open = []
 
         for arg in args:
@@ -85,16 +84,6 @@ class GradiaApp(Adw.Application):
         contents = stream.read_bytes(4096, None).get_data().decode("utf-8")
         print(contents)
 
-    def _parse_screenshot_flag(self, args: list[str]) -> Optional[Xdp.ScreenshotFlags]:
-        for arg in args:
-            if arg.startswith("--screenshot"):
-                mode = arg.split("=", 1)[1].strip().upper() if "=" in arg else "INTERACTIVE"
-                return {
-                    "INTERACTIVE": Xdp.ScreenshotFlags.INTERACTIVE,
-                    "FULL": Xdp.ScreenshotFlags.NONE
-                }.get(mode, Xdp.ScreenshotFlags.INTERACTIVE)
-        return None
-
     def do_open(self, files: Sequence[Gio.File], hint: str):
         logging.debug(f"do_open called with files: {[file.get_path() for file in files]} and hint: {hint}")
         for file in files:
@@ -113,7 +102,7 @@ class GradiaApp(Adw.Application):
             self._open_window(None)
 
     def _open_window(self, file_path: Optional[str]):
-        logging.info(f"Opening window with file_path={file_path}, screenshot_flags={self.screenshot_flags}")
+        logging.info(f"Opening window with file_path={file_path}")
         temp_dir = tempfile.mkdtemp()
         logging.debug(f"Created temp directory: {temp_dir}")
         self.temp_dirs.append(temp_dir)
@@ -122,11 +111,10 @@ class GradiaApp(Adw.Application):
             temp_dir=temp_dir,
             version=self.version,
             application=self,
-            init_screenshot_mode=self.screenshot_flags,
-            file_path=file_path
+            file_path=file_path,
+            start_screenshot=self.start_screenshot
         )
-        if not self.screenshot_flags:
-            window.show()
+        window.show()
 
     def on_shutdown(self, application):
         logging.info("Application shutdown started, cleaning temp directories...")
@@ -139,13 +127,13 @@ class GradiaApp(Adw.Application):
                 logging.warning(f"Failed to clean up temp dir {temp_dir}.", exception=e, show_exception=True)
         logging.info("Cleanup complete.")
 
-def main(version: str) -> int:
+def main(version: str, start_screenshot: str = None ) -> int:
     try:
         logging.info("Application starting...")
         loader = StdinImageLoader()
         image_path = loader.read_from_stdin()
 
-        app = GradiaApp(version=version)
+        app = GradiaApp(version=version, start_screenshot=start_screenshot)
         app._stdin_image_path = image_path
 
         return app.run(sys.argv)

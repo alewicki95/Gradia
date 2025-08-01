@@ -66,8 +66,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self,
         temp_dir: str,
         version: str,
-        init_screenshot_mode: Optional[Xdp.ScreenshotFlags],
         file_path: Optional[str] = None,
+        start_screenshot: Optional[str] = None,
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
@@ -75,6 +75,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.app: Adw.Application = kwargs['application']
         self.temp_dir: str = temp_dir
         self.version: str = version
+        self.start_screenshot = start_screenshot
         self.file_path: Optional[str] = file_path
         self.image_path: Optional[str] = None
         self.processed_pixbuf: Optional[Gdk.Pixbuf] = None
@@ -93,20 +94,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
             padding=5,
             background=self.background_selector.get_current_background()
         )
-
-        if init_screenshot_mode is not None:
-            def screenshot_error_callback(_error_message: str) -> None:
-                 self.app.quit()
-
-            def screenshot_success_callback() -> None:
-                self.show()
-
-            self.import_manager.take_screenshot(
-                init_screenshot_mode,
-                screenshot_error_callback,
-                screenshot_success_callback
-            )
-
         self._setup_actions()
         self._setup_image_stack()
         self._setup_sidebar()
@@ -116,6 +103,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
         if self.file_path:
             self.import_manager.load_from_file(self.file_path)
+        if self.start_screenshot:
+            self.import_manager.load_as_screenshot(self.start_screenshot)
 
     def _setup_actions(self) -> None:
         self.create_action("shortcuts", self._on_shortcuts_activated)
