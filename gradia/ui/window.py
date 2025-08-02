@@ -321,6 +321,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
     def _show_loading_state(self) -> None:
         self.main_stack.set_visible_child_name("main")
+        self.welcome_content.recent_picker.set_visible(False)
         self.image_stack.set_visible_child_name(self.PAGE_LOADING)
 
     def _hide_loading_state(self) -> None:
