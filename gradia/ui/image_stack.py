@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Adw, Gio, Gtk, Gdk, GLib, GObject, Graphene
+from gi.repository import Adw, Gio, Gtk, Gdk, GLib, GObject
 
 from gradia.constants import rootdir  # pyright: ignore
 from gradia.overlay.drawing_overlay import DrawingOverlay
@@ -23,20 +23,16 @@ from gradia.overlay.transparency_overlay import TransparencyBackground
 from gradia.overlay.crop_overlay import CropOverlay
 from gradia.overlay.drop_overlay import DropOverlay
 from gradia.ui.widget.aspect_ratio_button import AspectRatioButton
-from gradia.overlay.zoom_controller import ZoomController
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/image_stack.ui")
 class ImageStack(Adw.Bin):
     __gtype_name__ = "GradiaImageStack"
     __gsignals__ = {
-        "crop-toggled": (GObject.SignalFlags.RUN_FIRST, None, (bool,)),
-        "zoom-changed": (GObject.SignalFlags.RUN_FIRST, None, (float,))
+        "crop-toggled": (GObject.SignalFlags.RUN_FIRST, None, (bool,))
     }
 
     stack: Gtk.Stack = Gtk.Template.Child()
 
-    main_overlay: Gtk.Overlay = Gtk.Template.Child()
-    zoomable_widget: ZoomController = Gtk.Template.Child()
     picture_overlay: Gtk.Overlay = Gtk.Template.Child()
     drawing_overlay: DrawingOverlay = Gtk.Template.Child()
 
@@ -53,13 +49,9 @@ class ImageStack(Adw.Bin):
     confirm_crop_revealer: Gtk.Revealer = Gtk.Template.Child()
     aspect_crop_revealer: Gtk.Revealer = Gtk.Template.Child()
 
-    zoom_label: Gtk.Label = Gtk.Template.Child()
-    zoom_out_button: Gtk.Button = Gtk.Template.Child()
-    zoom_in_button: Gtk.Button = Gtk.Template.Child()
-    reset_zoom_button: Gtk.Button = Gtk.Template.Child()
-
     crop_enabled: bool = False
     crop_has_been_enabled: bool = False
+
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -77,53 +69,15 @@ class ImageStack(Adw.Bin):
         self.right_controls_revealer.set_reveal_child(True)
         self.reset_crop_revealer.set_visible(False)
 
-        self.zoomable_widget.set_child_widgets(
-            self.picture_overlay,
-            self.drawing_overlay,
-            self.crop_overlay,
-            self.transparency_background,
-            self.picture
-        )
-
-        self.zoomable_widget.connect("notify::zoom-level", self._on_zoom_level_changed)
-
         drop_target = Gtk.DropTarget.new(Gio.File, Gdk.DragAction.COPY)
         drop_target.set_preload(True)
+
         drop_target.connect("drop", self._on_file_dropped)
+        drop_target.set_preload(True)
+
         self.drop_overlay.drop_target = drop_target
 
         self.reset_crop_revealer.connect("notify::reveal-child", self._on_reset_crop_reveal_changed)
-
-        self._setup_zoom_actions()
-
-    def _setup_zoom_actions(self) -> None:
-        window = self.get_root()
-        if not window:
-            GLib.timeout_add(100, self._setup_zoom_actions)
-            return False
-
-        zoom_in_action = Gio.SimpleAction.new("zoom-in", None)
-        zoom_in_action.connect("activate", lambda *args: self.zoom_in())
-        window.add_action(zoom_in_action)
-
-        zoom_out_action = Gio.SimpleAction.new("zoom-out", None)
-        zoom_out_action.connect("activate", lambda *args: self.zoom_out())
-        window.add_action(zoom_out_action)
-
-        reset_zoom_action = Gio.SimpleAction.new("reset-zoom", None)
-        reset_zoom_action.connect("activate", lambda *args: self.reset_zoom())
-        window.add_action(reset_zoom_action)
-
-        return False
-
-    def _on_zoom_level_changed(self, widget, pspec) -> None:
-        zoom_level = widget.get_property("zoom-level")
-        percentage = int(zoom_level * 100)
-        self.zoom_label.set_text(f"{percentage}%")
-        self.emit("zoom-changed", zoom_level)
-
-        self.zoom_out_button.set_sensitive(zoom_level > widget.min_zoom)
-        self.zoom_in_button.set_sensitive(zoom_level < widget.max_zoom)
 
     def _on_file_dropped(self, _target: Gtk.DropTarget, value: Gio.File, _x: int, _y: int) -> bool:
         uri = value.get_uri()
@@ -169,30 +123,3 @@ class ImageStack(Adw.Bin):
         if self.crop_enabled:
             self.crop_overlay.aspect_ratio = ratio
 
-    def zoom_in(self, factor: float = 1.2) -> None:
-        self.zoomable_widget.zoom_in(factor)
-
-    def zoom_out(self, factor: float = 0.8) -> None:
-        self.zoomable_widget.zoom_out(factor)
-
-    def reset_zoom(self) -> None:
-        self.zoomable_widget.reset_zoom()
-
-    def set_zoom_level(self, zoom_level: float) -> None:
-        self.zoomable_widget.zoom_level = zoom_level
-
-    def get_zoom_level(self) -> float:
-        return self.zoomable_widget.zoom_level
-
-    @GObject.Property(type=float, default=1.0)
-    def zoom_level(self):
-        return self.zoomable_widget.zoom_level if self.zoomable_widget else 1.0
-
-    @zoom_level.setter
-    def zoom_level(self, value):
-        if self.zoomable_widget:
-            self.zoomable_widget.zoom_level = value
-
-    def on_image_loaded(self) -> None:
-        self.reset_zoom()
-        self._on_zoom_level_changed(self.zoomable_widget, None)

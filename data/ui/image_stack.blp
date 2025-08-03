@@ -9,6 +9,7 @@ template $GradiaImageStack : Adw.Bin {
     top-bar-style: flat;
     extend-content-to-top-edge: true;
 
+
     [top]
     Adw.HeaderBar headerbar {
       show-title: false;
@@ -16,55 +17,6 @@ template $GradiaImageStack : Adw.Bin {
       styles [
         "desktop"
       ]
-
-      [start]
-      Gtk.Box zoom_controls {
-        orientation: horizontal;
-        spacing: 6;
-        margin-start: 6;
-
-        Gtk.Button zoom_out_button {
-          icon-name: "zoom-out-symbolic";
-          tooltip-text: _("Zoom Out (Ctrl+-)");
-          action-name: "win.zoom-out";
-          styles [
-            "flat"
-          ]
-        }
-
-        Gtk.Label zoom_label {
-          label: "100%";
-          width-chars: 4;
-          xalign: 0.5;
-          styles [
-            "caption"
-          ]
-        }
-
-        Gtk.Button zoom_in_button {
-          icon-name: "zoom-in-symbolic";
-          tooltip-text: _("Zoom In (Ctrl++)");
-          action-name: "win.zoom-in";
-          styles [
-            "flat"
-          ]
-        }
-
-        Gtk.Separator {
-          orientation: vertical;
-          margin-start: 6;
-          margin-end: 6;
-        }
-
-        Gtk.Button reset_zoom_button {
-          icon-name: "zoom-original-symbolic";
-          tooltip-text: _("Reset Zoom (Ctrl+0)");
-          action-name: "win.reset-zoom";
-          styles [
-            "flat"
-          ]
-        }
-      }
     }
 
     content: Gtk.Stack stack {
@@ -89,7 +41,17 @@ template $GradiaImageStack : Adw.Bin {
 
       Gtk.StackPage image_page {
         name: "image";
-        child: Gtk.Overlay main_overlay {
+        child: Gtk.Overlay picture_overlay {
+          [overlay]
+          $GradiaDrawingOverlay drawing_overlay {
+            visible: true;
+          }
+
+          [overlay]
+          $GradiaCropOverlay crop_overlay {
+            visible: true;
+          }
+
           [overlay]
           Gtk.Box left_controls_container {
             orientation: horizontal;
@@ -173,6 +135,7 @@ template $GradiaImageStack : Adw.Bin {
                 ]
               }
             }
+
           }
 
           [overlay]
@@ -222,34 +185,17 @@ template $GradiaImageStack : Adw.Bin {
             }
           }
 
-          child: $GradiaZoomController zoomable_widget {
-            hexpand: true;
-            vexpand: true;
-
-            Gtk.Overlay picture_overlay {
-              [overlay]
-              $GradiaDrawingOverlay drawing_overlay {
-                visible: true;
-              }
-
-              [overlay]
-              $GradiaCropOverlay crop_overlay {
-                visible: true;
-              }
-
-              child: Gtk.Overlay background_overlay {
-                [overlay]
-                Gtk.Picture picture {
-                  content-fit: contain;
-                  can-shrink: true;
-                }
-
-                child: $GradiaTransparencyBackground transparency_background {
-                  hexpand: true;
-                  vexpand: true;
-                };
-              };
+          child: Gtk.Overlay background_overlay {
+            [overlay]
+            Gtk.Picture picture {
+              content-fit: contain;
+              can-shrink: true;
             }
+
+            child: $GradiaTransparencyBackground transparency_background {
+              hexpand: true;
+              vexpand: true;
+            };
           };
         };
       }
