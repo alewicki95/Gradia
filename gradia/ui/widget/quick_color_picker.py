@@ -155,7 +155,7 @@ class QuickColorPicker(Gtk.Box):
         ctx.add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
         box._color_css_provider = provider
-        ctx.remove_class("transparent-color-button") if color.alpha > 0 else ctx.add_class("transparent-color-button")
+        ctx.remove_class("transparent-color-button-small") if color.alpha > 0 else ctx.add_class("transparent-color-button-small")
 
 
     def _apply_hover_background(self, widget, color):

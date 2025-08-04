@@ -113,7 +113,6 @@ class DrawingToolsGroup(Adw.PreferencesGroup):
         self.font_dropdown_controller = FontDropdownController(
             self.font_string_list,
             self.settings,
-            self.get_root(),
             self._on_font_changed,
         )
 
@@ -133,6 +132,7 @@ class DrawingToolsGroup(Adw.PreferencesGroup):
         self.connect("realize", self._on_realize)
 
     def _on_realize(self, widget):
+        self.font_dropdown_controller.window = self.get_root()
         self._initialize_all_actions()
 
     """

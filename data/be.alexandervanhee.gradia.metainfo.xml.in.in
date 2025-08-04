@@ -37,6 +37,19 @@
 		<color type="primary" scheme_preference="dark">#073c6f</color>
 	</branding>
 	<releases>
+      <release version="1.9.0" date="2025-08-04">
+      <description translate="no">
+          <p>This feature release includes:</p>
+          <ul>
+              <li>Zoom in/out functionality.</li>
+              <li>Improved quick color selector.</li>
+              <li>Fix for the app not properly closing from the start screen.</li>
+              <li>Redesigned on-screen display.</li>
+              <li>Proper support for multiple instances of the app.</li>
+              <li>Faster activating screenshot shortcut.</li>
+          </ul>
+      </description>
+      </release>
       <release version="1.8.0" date="2025-07-31">
         <description translate="no">
             <p>This feature release includes:</p>
