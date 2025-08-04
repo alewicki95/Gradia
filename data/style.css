@@ -229,4 +229,7 @@ button.color-picker-button {
   padding: 6px;
 }
 
-
+.header-osd windowcontrols button image {
+  background-color: var(--osd-background-color);
+  background-image: none;
+}

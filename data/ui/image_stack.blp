@@ -2,7 +2,7 @@ using Gtk 4.0;
 using Adw 1;
 
 template $GradiaImageStack : Adw.Bin {
-  width-request: 250;
+  width-request: 375;
   child: $DropOverlay drop_overlay {
     title: _("Drop Image Here");
     child-widget:Adw.ToolbarView toolbar_view {
@@ -14,7 +14,7 @@ template $GradiaImageStack : Adw.Bin {
       show-title: false;
       show-start-title-buttons: false;
       styles [
-        "desktop"
+        "header-osd"
       ]
     }
 
