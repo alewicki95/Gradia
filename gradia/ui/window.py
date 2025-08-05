@@ -132,6 +132,13 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.create_action("zoom-out", lambda *_: self.image_bin.zoom_out(), ["<Control>minus", "<Control>KP_Subtract"])
         self.create_action("reset-zoom", lambda *_: self.image_bin.reset_zoom(), ["<Control>0", "<Control>KP_0"])
 
+        for mode in DrawingMode:
+            self.create_action(
+                f"set-drawing-mode-{mode.name.lower()}",
+                lambda *_, m=mode: self.sidebar.set_drawing_mode(m),
+                mode.shortcuts
+            )
+
         self.create_action("undo", lambda *_: self.drawing_overlay.undo(), ["<Primary>z"])
         self.create_action("redo", lambda *_: self.drawing_overlay.redo(), ["<Primary><Shift>z"])
         self.create_action("clear", lambda *_: self.drawing_overlay.clear_drawing())
