@@ -152,6 +152,18 @@ template $GradiaImageSidebar : Adw.Bin {
         Adw.ActionRow location_row {
           title: _("Location");
           subtitle: _("No file loaded");
+
+
+          [suffix]
+          Button {
+            valign: center;
+            icon-name: "folder-symbolic";
+            action-name: "win.open-folder";
+            tooltip-text: _("Open Folder");
+            styles [
+              "flat"
+            ]
+          }
         }
 
         Adw.ActionRow processed_size_row {
