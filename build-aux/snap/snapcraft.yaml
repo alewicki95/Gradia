@@ -13,7 +13,7 @@ parts:
   gradia:
     plugin: meson
     source: https://github.com/AlexanderVanhee/Gradia.git
-    source-tag: 'v1.7.1'
+    source-tag: 'v1.9.0'
     source-depth: 1
     meson-parameters:
       - --prefix=/snap/gradia/current/usr
