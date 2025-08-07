@@ -440,7 +440,7 @@ class SourceImageLoader(BaseImageLoader):
             logger.warning(f"Invalid generated image path: {image_path}")
             return
 
-        self._set_image_and_update_ui(LoadedImage(file_path, ImageOrigin.SourceImage))
+        self._set_image_and_update_ui(LoadedImage(image_path, ImageOrigin.SourceImage))
         self.window._show_notification(_("Source snippet Generated!"))
 
 class ImportManager:

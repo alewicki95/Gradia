@@ -71,7 +71,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
-
+        self._setup_accelerator_handling()
         self.app: Adw.Application = kwargs['application']
         self.temp_dir: str = temp_dir
         self.version: str = version
@@ -138,7 +138,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
             self.create_action(
                 f"set-drawing-mode-{mode.name.lower()}",
                 lambda *_, m=mode: self.sidebar.set_drawing_mode(m),
-                mode.shortcuts
+                mode.shortcuts,
+                disable_on_entry_focus=True
             )
 
         self.create_action("undo", lambda *_: self.drawing_overlay.undo(), ["<Primary>z"])
@@ -283,16 +284,46 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         callback: Callable[..., Any],
         shortcuts: Optional[list[str]] = None,
         enabled: bool = True,
-        vt: Optional[str] = None
+        vt: Optional[str] = None,
+        disable_on_entry_focus: bool = False
     ) -> None:
         variant_type = GLib.VariantType.new(vt) if vt is not None else None
         action: Gio.SimpleAction = Gio.SimpleAction.new(name, variant_type)
+
         action.connect("activate", callback)
         action.set_enabled(enabled)
         self.add_action(action)
 
         if shortcuts:
             self.app.set_accels_for_action(f"win.{name}", shortcuts)
+            if disable_on_entry_focus:
+                if not hasattr(self, '_entry_disabled_actions'):
+                    self._entry_disabled_actions = {}
+                self._entry_disabled_actions[name] = shortcuts
+
+    def _setup_accelerator_handling(self) -> None:
+        if not hasattr(self, '_entry_disabled_actions'):
+            self._entry_disabled_actions = {}
+
+        def on_focus_changed(window, pspec):
+            widget = self.get_focus()
+            is_editable = False
+            if widget:
+                if isinstance(widget, (Gtk.Entry, Gtk.TextView, Gtk.SearchEntry)):
+                    is_editable = True
+                elif type(widget).__name__ == 'Text':
+                    parent = widget.get_parent()
+                    if isinstance(parent, (Gtk.Entry, Gtk.SearchEntry)):
+                        is_editable = True
+
+            if is_editable:
+                for action_name in self._entry_disabled_actions:
+                    self.app.set_accels_for_action(f"win.{action_name}", [])
+            else:
+                for action_name, shortcuts in self._entry_disabled_actions.items():
+                    self.app.set_accels_for_action(f"win.{action_name}", shortcuts)
+
+        self.connect("notify::focus-widget", on_focus_changed)
 
     def show(self) -> None:
         self.present()
@@ -335,7 +366,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self._show_loading_state()
         self.process_image()
         self._set_export_ready(True)
-        print(image.has_proper_folder())
         self.lookup_action("open-folder").set_enabled(image.has_proper_folder())
 
     def _show_loading_state(self) -> None:
