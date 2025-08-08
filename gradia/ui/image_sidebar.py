@@ -57,7 +57,9 @@ class ImageSidebar(Adw.Bin):
     padding_row: Adw.SpinRow = Gtk.Template.Child()
     padding_adjustment: Gtk.Adjustment = Gtk.Template.Child()
     corner_radius_row: Adw.SpinRow = Gtk.Template.Child()
+    shadow_strength_row: Adw.ActionRow = Gtk.Template.Child()
     corner_radius_adjustment: Gtk.Adjustment = Gtk.Template.Child()
+    aspect_ratio_row: Adw.ActionRow = Gtk.Template.Child()
     aspect_ratio_button: Gtk.Button = Gtk.Template.Child()
     shadow_strength_scale: Gtk.Scale = Gtk.Template.Child()
     auto_balance_toggle: Gtk.Switch = Gtk.Template.Child()
@@ -185,7 +187,6 @@ class ImageSidebar(Adw.Bin):
         self._notify_image_options_changed()
         self.aspect_ratio_popover.popdown()
 
-
     def _connect_signals(self) -> None:
         self.padding_row.connect("output", self._on_padding_changed)
         self.corner_radius_row.connect("output", self._on_corner_radius_changed)
@@ -246,8 +247,8 @@ class ImageSidebar(Adw.Bin):
             corner_radius=0,
             aspect_ratio="",
             shadow_strength=0,
-            auto_balance=False,
-            rotation=0
+            auto_balance=self.auto_balance_toggle.get_active(),
+            rotation=self._current_rotation
         )
 
     def _get_settings_options(self) -> ImageOptions:
@@ -268,12 +269,18 @@ class ImageSidebar(Adw.Bin):
 
         self.on_image_options_changed(options)
 
+    def _set_selective_sensitivity(self, is_disabled: bool) -> None:
+        self.padding_row.set_sensitive(not is_disabled)
+        self.corner_radius_row.set_sensitive(not is_disabled)
+        self.aspect_ratio_row.set_sensitive(not is_disabled)
+        self.shadow_strength_row.set_sensitive(not is_disabled)
+
     def _on_background_mode_changed(self, mode: str) -> None:
         self._background_mode = mode
         is_disabled = mode == "none"
         self._updating_widgets = True
 
-        self.image_options_group_content.set_sensitive(not is_disabled)
+        self._set_selective_sensitivity(is_disabled)
 
         if is_disabled:
             options = self._get_default_options()
