@@ -220,24 +220,36 @@ class FileDialogExporter(BaseImageExporter):
 class ClipboardExporter(BaseImageExporter):
     """Handles exporting images to clipboard"""
 
-    TEMP_CLIPBOARD_EXPORT_FILENAME: str = "clipboard_export.png"
-
-    def __init__(self, window: Gtk.ApplicationWindow, temp_dir: str) -> None:
-        super().__init__(window, temp_dir)
-
-
-    def copy_to_clipboard(self) -> None:
-        """Copy processed image to system clipboard"""
+    def copy_to_clipboard(self, silent=False) -> None:
         try:
             self._ensure_processed_image_available()
 
-            temp_path = save_pixbuff_to_path(self.temp_dir, self.get_processed_pixbuf())
-            if not temp_path or not os.path.exists(temp_path):
-                raise Exception("Failed to create temporary file for clipboard")
+            def _task_thread_func(task, source_object, task_data, cancellable):
+                try:
+                    temp_path = save_pixbuff_to_path(self.temp_dir, self.get_processed_pixbuf())
+                    task.return_value(temp_path)
+                except Exception as e:
+                    task.return_error(GLib.Error(str(e)))
 
-            copy_file_to_clipboard(temp_path)
-            self.window.show_close_confirmation = False
-            self.window._show_notification(_("Image copied to clipboard"))
+            def _on_task_complete(source_object, result, user_data):
+                try:
+                    temp_path = result.propagate_value().value
+
+                    if not temp_path or not os.path.exists(temp_path):
+                        raise Exception("Failed to create temporary file for clipboard")
+
+                    copy_file_to_clipboard(temp_path)
+
+                    if not silent:
+                        self.window.show_close_confirmation = False
+                        self.window._show_notification(_("Image copied to clipboard"))
+
+                except Exception as e:
+                    self.window._show_notification(_("Failed to copy image to clipboard"))
+                    print(f"Error copying to clipboard: {e}")
+
+            task = Gio.Task.new(None, None, _on_task_complete, None)
+            task.run_in_thread(_task_thread_func)
 
         except Exception as e:
             self.window._show_notification(_("Failed to copy image to clipboard"))
@@ -335,9 +347,9 @@ class ExportManager:
         """Export to file using file dialog"""
         self.file_exporter.save_to_file()
 
-    def copy_to_clipboard(self) -> None:
+    def copy_to_clipboard(self, silent = False) -> None:
         """Export to clipboard"""
-        self.clipboard_exporter.copy_to_clipboard()
+        self.clipboard_exporter.copy_to_clipboard(silent=silent)
 
     def run_custom_command(self) -> None:
         """Run custom export command"""

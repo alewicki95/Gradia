@@ -302,17 +302,18 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     def show(self) -> None:
         self.present()
 
-    def process_image(self) -> None:
+    def process_image(self, callback=None) -> None:
         if not self.image:
             return
-
-        threading.Thread(target=self._process_in_background, daemon=True).start()
+        def worker():
+            self._process_in_background(callback)
+        threading.Thread(target=worker, daemon=True).start()
 
     """
     Private Methods
     """
 
-    def set_image(self, image: LoadedImage):
+    def set_image(self, image: LoadedImage, copy_after_processing=False):
         self.image = image
         self.drawing_overlay.clear_drawing()
         self._update_sidebar_file_info(image)
@@ -320,9 +321,15 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.toolbar_view.set_top_bar_style(Adw.ToolbarStyle.RAISED)
         self.image_stack.get_style_context().add_class("view")
         self._show_loading_state()
-        self.process_image()
-        self._set_export_ready(True)
-        self.lookup_action("open-folder").set_enabled(image.has_proper_folder())
+
+        def after_process():
+            if copy_after_processing:
+                self.export_manager.copy_to_clipboard(silent=True)
+            self._set_export_ready(True)
+            self.lookup_action("open-folder").set_enabled(image.has_proper_folder())
+
+        self.process_image(callback=after_process)
+
 
     def _show_loading_state(self) -> None:
         self.main_stack.set_visible_child_name("main")
@@ -341,18 +348,24 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         if self.image:
             self.process_image()
 
-    def _process_in_background(self) -> None:
+    def _process_in_background(self, callback=None) -> None:
         try:
             if self.image is not None:
                 self.processor.set_image(self.image)
                 pixbuf, true_width, true_height = self.processor.process()
                 self._update_processed_image_size(true_width, true_height)
                 self.processed_pixbuf = pixbuf
-
             else:
                 print("No image path set for processing.")
 
-            GLib.idle_add(self._update_image_preview, priority=GLib.PRIORITY_DEFAULT)  # pyright: ignore
+            def finish():
+                self._update_image_preview()
+                if callback:
+                    callback()
+                return False
+
+            GLib.idle_add(finish, priority=GLib.PRIORITY_DEFAULT)
+
         except Exception as e:
             print(f"Error processing image: {e}")
 
