@@ -34,6 +34,8 @@ class ZoomController(Gtk.Widget):
         self._pan_y = 0.0
         self._mouse_x = 0.0
         self._mouse_y = 0.0
+        self._gesture_zoom_sensitivity = 1
+        self._gesture_start_zoom = 1.0
 
         self._previous_zoom_level = 1.0
         self._previous_pan_x = 0.0
@@ -49,7 +51,6 @@ class ZoomController(Gtk.Widget):
 
         self._is_middle_dragging = False
         self._original_cursor = None
-        self._debug_enabled = False
 
         self._setup_gestures()
 
@@ -57,12 +58,9 @@ class ZoomController(Gtk.Widget):
         self.set_focusable(True)
         self.set_can_focus(True)
 
-    def _debug_print(self, message):
-        if self._debug_enabled:
-            logger.info(f"[ZoomController] {message}")
-
     def _setup_gestures(self):
         self._zoom_gesture = Gtk.GestureZoom.new()
+        self._zoom_gesture.connect("begin", self._on_zoom_begin)
         self._zoom_gesture.connect("scale-changed", self._on_zoom_changed)
         self.add_controller(self._zoom_gesture)
 
@@ -104,12 +102,24 @@ class ZoomController(Gtk.Widget):
         self._mouse_x = x
         self._mouse_y = y
 
+    def _on_zoom_begin(self, gesture, sequence):
+        self._gesture_start_zoom = self._zoom_level
+
     def _on_zoom_changed(self, gesture, scale):
         if self._disable_zoom:
             return
+
+        adjusted_scale = scale ** self._gesture_zoom_sensitivity
+
+        target_zoom = self._gesture_start_zoom * adjusted_scale
+
+        if self._zoom_level > 0:
+            zoom_factor = target_zoom / self._zoom_level
+        else:
+            zoom_factor = 1.0
+
         _ , center_x, center_y = gesture.get_bounding_box_center()
-        self._debug_print(f"Gesture zoom at {center_x:.1f}, {center_y:.1f} with scale {scale:.3f}")
-        self._zoom_at_point(scale, center_x, center_y)
+        self._zoom_at_point(zoom_factor, center_x, center_y)
 
     def _on_scroll(self, controller, dx, dy):
         if self._disable_zoom:
@@ -119,7 +129,6 @@ class ZoomController(Gtk.Widget):
 
         if modifiers & Gdk.ModifierType.CONTROL_MASK:
             zoom_factor = 1.1 if dy < 0 else 0.9
-            self._debug_print(f"Ctrl+scroll zoom at mouse {self._mouse_x:.1f}, {self._mouse_y:.1f}")
             self._zoom_at_point(zoom_factor, self._mouse_x, self._mouse_y)
             return Gdk.EVENT_STOP
         else:
@@ -131,11 +140,9 @@ class ZoomController(Gtk.Widget):
             if modifiers & Gdk.ModifierType.SHIFT_MASK:
                 self._pan_x -= dy * scroll_speed
                 self._pan_y -= dx * scroll_speed
-                self._debug_print(f"Shift+scroll pan by dx={dx:.2f}, dy={dy:.2f} (reversed)")
             else:
                 self._pan_y -= dy * scroll_speed
                 self._pan_x -= dx * scroll_speed
-                self._debug_print(f"Normal scroll pan by dx={dx:.2f}, dy={dy:.2f}")
 
             self._constrain_pan()
             self.queue_draw()
@@ -180,8 +187,6 @@ class ZoomController(Gtk.Widget):
         if new_zoom != old_zoom:
             widget_width = self.get_width()
             widget_height = self.get_height()
-
-            self._debug_print(f"Zoom from {old_zoom:.3f} to {new_zoom:.3f} at point {center_x:.1f}, {center_y:.1f}")
 
             widget_center_x = widget_width / 2
             widget_center_y = widget_height / 2
@@ -245,10 +250,6 @@ class ZoomController(Gtk.Widget):
 
                     self._pan_x = max(min_pan_x, min(max_pan_x, self._pan_x))
                     self._pan_y = max(min_pan_y, min(max_pan_y, self._pan_y))
-
-                    if self._debug_enabled and (old_pan_x != self._pan_x or old_pan_y != self._pan_y):
-                        self._debug_print(f"Pan constrained from {old_pan_x:.1f}, {old_pan_y:.1f} to {self._pan_x:.1f}, {self._pan_y:.1f}")
-                        self._debug_print(f"Pan limits: x[{min_pan_x:.1f}, {max_pan_x:.1f}], y[{min_pan_y:.1f}, {max_pan_y:.1f}]")
                     return
 
         overpan_x = widget_width / 2
@@ -310,15 +311,6 @@ class ZoomController(Gtk.Widget):
         center_x = transformed_x + transformed_width / 2
         center_y = transformed_y + transformed_height / 2
         return center_x, center_y
-
-    def _draw_debug_image_bounds(self, snapshot):
-        if not self._debug_enabled:
-            return
-        transformed_x, transformed_y, transformed_width, transformed_height = self._get_transformed_bounds()
-        rect = Graphene.Rect.alloc()
-        rect.init(transformed_x, transformed_y, transformed_width, transformed_height)
-        color = Gdk.RGBA(red=1.0, green=0.0, blue=0.0, alpha=0.5)
-        snapshot.append_color(color, rect)
 
     def get_coordinate_transform_function(self):
         def transform_coordinates(mouse_x, mouse_y):
@@ -382,8 +374,6 @@ class ZoomController(Gtk.Widget):
 
         snapshot.restore()
 
-        self._draw_debug_image_bounds(snapshot)
-
     def set_child_widgets(self, picture_overlay, drawing_overlay, crop_overlay,
                           transparency_background, picture):
         child = self.get_first_child()
@@ -432,7 +422,6 @@ class ZoomController(Gtk.Widget):
         scale_y = widget_height / image_height
         scale = min(scale_x, scale_y)
 
-        self._debug_print(f"Fit to window: scale {scale:.3f}")
         self._zoom_level = scale
         self._pan_x = 0.0
         self._pan_y = 0.0
@@ -469,6 +458,14 @@ class ZoomController(Gtk.Widget):
     @max_zoom.setter
     def max_zoom(self, value):
         self._max_zoom = value
+
+    @GObject.Property(type=float, default=1)
+    def gesture_zoom_sensitivity(self):
+        return self._gesture_zoom_sensitivity
+
+    @gesture_zoom_sensitivity.setter
+    def gesture_zoom_sensitivity(self, value):
+        self._gesture_zoom_sensitivity = max(0.1, min(1.0, value))
 
     @GObject.Property(type=bool, default=False)
     def disable_zoom(self):
