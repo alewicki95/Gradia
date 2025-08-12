@@ -63,7 +63,7 @@ class ProviderListPage(Adw.NavigationPage):
         spinner = Adw.Spinner.new()
         spinner.set_size_request(32, 32)
 
-        label = Gtk.Label(label=_("Loading providers data..."), vexpand=True, hexpand=True)
+        label = Gtk.Label(label=_("Loading providers data…"), vexpand=True, hexpand=True)
 
         loading_box.append(spinner)
         loading_box.append(label)

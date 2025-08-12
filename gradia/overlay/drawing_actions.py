@@ -177,7 +177,7 @@ class ArrowAction(DrawingAction):
         else:
             self.end = end
         self.color = options.primary_color
-        self.arrow_head_size = 25
+        self.arrow_head_size = options.size *4
         self.width = options.size
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
         start_x, start_y = image_to_widget_coords(*self.start)
