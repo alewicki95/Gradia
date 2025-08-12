@@ -258,3 +258,10 @@ toggle-group toggle  {
     padding-left:9px;
     padding-right:9px;
 }
+
+image.symbolic-circular {
+  background-color: color-mix(in srgb, currentColor 8%, transparent);
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+}

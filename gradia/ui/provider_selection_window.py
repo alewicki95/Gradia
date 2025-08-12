@@ -22,80 +22,33 @@ from gi.repository import Gtk, Adw, GLib, Gdk, Soup, GdkPixbuf
 from gradia.backend.settings import Settings
 from gradia.backend.logger import Logger
 from gradia.constants import rel_ver
-
+from gradia.constants import rootdir  # pyright: ignore
 import json
-
 logger = Logger()
 
-
+@Gtk.Template(resource_path=f"{rootdir}/ui/preferences/provider_list_page.ui")
 class ProviderListPage(Adw.NavigationPage):
     __gtype_name__ = 'ProviderListPage'
 
-    PROVIDERS_DATA_URL = f"https://gradia.alexandervanhee.be/upload-providers/{rel_ver}.json"
+    view_stack = Gtk.Template.Child()
+    loading_spinner = Gtk.Template.Child()
+    loading_label = Gtk.Template.Child()
+    error_status = Gtk.Template.Child()
+    providers_group = Gtk.Template.Child()
 
-    def __init__(self, navigation_view: Adw.NavigationView, on_provider_selected=None, **kwargs):
-        super().__init__(title=_("Choose Provider"), **kwargs)
+    PROVIDERS_DATA_URL = f"http://localhost:8000/{rel_ver}.json"
 
-        self.navigation_view = navigation_view
+    def __init__(self, preferences_dialog=None,on_provider_selected=None, **kwargs):
+        super().__init__(**kwargs)
+
+        self.preferences_dialog = preferences_dialog
         self.on_provider_selected = on_provider_selected
         self.session = Soup.Session()
         self.providers_data = None
-
-        self.view_stack = Adw.ViewStack(enable_transitions=True)
-        self.set_child(self.view_stack)
-
-        self._setup_loading_view()
-        self._setup_error_view()
         self._load_providers_data()
 
-    def _setup_loading_view(self):
-        header_bar = Adw.HeaderBar()
-        content = Adw.ToolbarView()
-        content.add_top_bar(header_bar)
-
-        loading_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            spacing=12,
-            halign=Gtk.Align.CENTER,
-            valign=Gtk.Align.CENTER
-        )
-
-        spinner = Adw.Spinner.new()
-        spinner.set_size_request(32, 32)
-
-        label = Gtk.Label(label=_("Loading providers data…"), vexpand=True, hexpand=True)
-
-        loading_box.append(spinner)
-        loading_box.append(label)
-
-        content.set_content(loading_box)
-        self.view_stack.add_named(content, "loading")
-        self.view_stack.set_visible_child_name("loading")
-
-    def _setup_error_view(self):
-        header_bar = Adw.HeaderBar()
-        content = Adw.ToolbarView()
-        content.add_top_bar(header_bar)
-
-        error_status_page = Adw.StatusPage.new()
-        error_status_page.set_title(_("An error occurred"))
-        error_status_page.set_description(_("Please try again later."))
-        error_status_page.set_icon_name("dialog-error-symbolic")
-
-        clamp = Adw.Clamp(
-            maximum_size=600,
-            tightening_threshold=400,
-            child=error_status_page,
-            margin_top=24,
-            margin_bottom=24,
-            margin_start=12,
-            margin_end=12
-        )
-
-        content.set_content(clamp)
-        self.view_stack.add_named(content, "error")
-
     def _show_error_message(self, message: str):
+        self.error_status.set_description(message)
         self.view_stack.set_visible_child_name("error")
 
     def _load_providers_data(self):
@@ -110,76 +63,84 @@ class ProviderListPage(Adw.NavigationPage):
                 raw_bytes = glib_bytes.get_data()
                 json_data = raw_bytes.decode('utf-8')
                 self.providers_data = json.loads(json_data)
-                GLib.idle_add(self._create_provider_list_content)
+                GLib.idle_add(self._populate_providers_list)
             except Exception as e:
                 logger.error(f"Failed to load providers data from {self.PROVIDERS_DATA_URL}: {e}")
                 GLib.idle_add(self._show_error_message, f"Failed to load providers: {e}")
 
         self.session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, None, on_response, message)
 
-    def _create_provider_list_content(self):
-        header_bar = Adw.HeaderBar()
-        content = Adw.ToolbarView()
-        content.add_top_bar(header_bar)
-
-        providers_page = Adw.PreferencesPage()
-        providers_group = Adw.PreferencesGroup()
-
-        providers_page.add(providers_group)
+    def _populate_providers_list(self):
 
         for provider_id, provider_data in self.providers_data.items():
-            row = Adw.ActionRow(
-                title=provider_data["name"],
-                subtitle=provider_data["description"],
-                activatable=True
-            )
+            row = self._create_provider_row(provider_id, provider_data)
+            self.providers_group.add(row)
 
-            picture = Gtk.Picture(content_fit=Gtk.ContentFit.SCALE_DOWN)
-            self._load_picture_from_url(picture, provider_data.get("icon_url"), 32, fallback_icon_name="image-missing-symbolic")
-            row.add_prefix(picture)
+        custom_row = self._create_custom_provider_row()
+        self.providers_group.add(custom_row)
 
-            row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
-            row.provider_id = provider_id
-            row.connect("activated", self._on_provider_selected)
-            providers_group.add(row)
+        self.view_stack.set_visible_child_name("content")
 
-        custom_row = Adw.ActionRow(
+    def _create_provider_row(self, provider_id: str, provider_data: dict) -> Adw.ActionRow:
+        row = Adw.ActionRow(
+            title=provider_data["name"],
+            subtitle=provider_data["description"],
+            activatable=True
+        )
+
+        picture = Gtk.Picture(content_fit=Gtk.ContentFit.SCALE_DOWN)
+        self._load_picture_from_url(
+            picture,
+            provider_data.get("icon_url"),
+            32,
+            fallback_icon_name="image-missing-symbolic"
+        )
+        row.add_prefix(picture)
+
+        row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
+
+        row.provider_id = provider_id
+        row.connect("activated", self._on_provider_selected)
+
+        return row
+
+    def _create_custom_provider_row(self) -> Adw.ActionRow:
+        row = Adw.ActionRow(
             title=_("Custom Provider"),
             subtitle=_("Create your own custom upload command"),
             activatable=True
         )
 
-        custom_icon = Gtk.Image.new_from_icon_name("applications-engineering-symbolic")
-        custom_icon.set_margin_start(8)
-        custom_icon.set_margin_end(8)
-        custom_row.add_prefix(custom_icon)
-        custom_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
-        custom_row.provider_id = "custom"
-        custom_row.connect("activated", self._on_provider_selected)
-        providers_group.add(custom_row)
+        custom_icon = Gtk.Image.new_from_icon_name("engineering-symbolic")
+        custom_icon.set_valign(Gtk.Align.CENTER)
+        custom_icon.add_css_class("symbolic-circular")
+        row.add_prefix(custom_icon)
 
-        content.set_content(providers_page)
-        self.view_stack.add_named(content, "content")
-        self.view_stack.set_visible_child_name("content")
+        row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
+
+        row.provider_id = "custom"
+        row.connect("activated", self._on_provider_selected)
+
+        return row
 
     def _on_provider_selected(self, row: Adw.ActionRow):
         provider_id = row.provider_id
 
         if provider_id == "custom":
             custom_page = CustomProviderPage(
-                navigation_view=self.navigation_view,
+                preferences_dialog=self.preferences_dialog,
                 on_provider_selected=self.on_provider_selected
             )
-            self.navigation_view.push(custom_page)
+            self.preferences_dialog.push_subpage(custom_page)
         else:
             detail_page = ProviderDetailPage(
-                navigation_view=self.navigation_view,
+                preferences_dialog=self.preferences_dialog,
                 provider_id=provider_id,
                 providers_data=self.providers_data,
                 session=self.session,
                 on_provider_selected=self.on_provider_selected
             )
-            self.navigation_view.push(detail_page)
+            self.preferences_dialog.push_subpage(detail_page)
 
     def _load_picture_from_url(self, picture: Gtk.Picture, url: str, size_px: int, fallback_icon_name: str = "image-missing-symbolic"):
         if not url:
@@ -209,9 +170,9 @@ class ProviderListPage(Adw.NavigationPage):
                     raise RuntimeError("Failed to scale pixbuf")
 
                 texture = Gdk.Texture.new_for_pixbuf(scaled_pixbuf)
-                picture.set_paintable(texture)
+                GLib.idle_add(picture.set_paintable, texture)
             except Exception as e:
-                logger.warn(f"Failed to load image from {url}: {e}")
+                logger.warning(f"Failed to load image from {url}: {e}")
                 GLib.idle_add(self._set_fallback_icon, picture, fallback_icon_name)
 
         self.session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, None, on_response, message)
@@ -219,23 +180,27 @@ class ProviderListPage(Adw.NavigationPage):
     def _set_fallback_icon(self, picture: Gtk.Picture, icon_name: str):
         display = Gdk.Display.get_default()
         icon_theme = Gtk.IconTheme.get_for_display(display)
-        icon_info = icon_theme.lookup_icon(icon_name, None, 32, 1, Gtk.TextDirection.NONE, Gtk.IconLookupFlags.NONE)
+        icon_info = icon_theme.lookup_icon(
+            icon_name, None, 32, 1,
+            Gtk.TextDirection.NONE,
+            Gtk.IconLookupFlags.NONE
+        )
 
         if icon_info:
             picture.set_paintable(icon_info)
         else:
-            picture.set_paintable(Gtk.Image.new_from_icon_name("image-missing-symbolic").get_paintable())
+            fallback_image = Gtk.Image.new_from_icon_name("image-missing-symbolic")
+            picture.set_paintable(fallback_image.get_paintable())
 
         picture.set_size_request(32, 32)
-
 
 class CustomProviderPage(Adw.NavigationPage):
     __gtype_name__ = 'CustomProviderPage'
 
-    def __init__(self, navigation_view: Adw.NavigationView, on_provider_selected=None, **kwargs):
+    def __init__(self, preferences_dialog: Adw.NavigationView, on_provider_selected=None, **kwargs):
         super().__init__(title=_("Custom Provider"), **kwargs)
 
-        self.navigation_view = navigation_view
+        self.preferences_dialog = preferences_dialog
         self.on_provider_selected = on_provider_selected
 
         header_bar = Adw.HeaderBar()
@@ -333,18 +298,19 @@ class CustomProviderPage(Adw.NavigationPage):
         if command:
             if self.on_provider_selected:
                 self.on_provider_selected(_("Custom"), command)
-            self.navigation_view.pop_to_tag("preferences")
+            self.preferences_dialog.pop_subpage()
+            self.preferences_dialog.pop_subpage()
 
 
 class ProviderDetailPage(Adw.NavigationPage):
     __gtype_name__ = 'ProviderDetailPage'
 
-    def __init__(self, navigation_view: Adw.NavigationView, provider_id: str, providers_data: dict,
+    def __init__(self, preferences_dialog: Adw.NavigationView, provider_id: str, providers_data: dict,
                  session: Soup.Session, on_provider_selected=None, **kwargs):
         self.provider_data = providers_data[provider_id]
         super().__init__(title=self.provider_data["name"], **kwargs)
 
-        self.navigation_view = navigation_view
+        self.preferences_dialog = preferences_dialog
         self.provider_id = provider_id
         self.providers_data = providers_data
         self.session = session
@@ -493,7 +459,8 @@ class ProviderDetailPage(Adw.NavigationPage):
         if self.on_provider_selected:
             self.on_provider_selected(name, command)
 
-        self.navigation_view.pop_to_tag("preferences")
+        self.preferences_dialog.pop_subpage()
+        self.preferences_dialog.pop_subpage()
 
     def _on_link_activated(self, row: Adw.ActionRow, url: str):
         launcher = Gtk.UriLauncher.new(url)

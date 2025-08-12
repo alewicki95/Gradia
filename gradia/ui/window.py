@@ -427,7 +427,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
     def _on_preferences_activated(self, action: Gio.SimpleAction, param) -> None:
         preferences_window = PreferencesWindow(self)
-        preferences_window.present()
+        preferences_window.present(self)
 
     def set_screenshot_subfolder(self, subfolder) -> None:
         Settings().screenshot_subfolder = subfolder
