@@ -47,15 +47,18 @@ class LoadedImage:
         self.image_path: str = image_path
         self.origin: ImageOrigin = origin
 
-    def get_proper_name(self) -> str:
+    def get_proper_name(self, with_extension: bool = True) -> str:
         if self.origin == ImageOrigin.Clipboard:
             return _("Clipboard Image")
-        elif self.origin == ImageOrigin.Screenshot or self.origin == ImageOrigin.FakeScreenshot:
+        elif self.origin in (ImageOrigin.Screenshot, ImageOrigin.FakeScreenshot):
             return _("Screenshot")
         elif self.origin == ImageOrigin.SourceImage:
             return _("Generated Image")
         else:
-            return os.path.basename(self.image_path)
+            filename = os.path.basename(self.image_path)
+            if not with_extension:
+                filename, _unused = os.path.splitext(filename)
+            return filename
 
     def get_proper_folder(self) -> str:
         if self.origin == ImageOrigin.Clipboard:
@@ -106,9 +109,9 @@ class BaseImageLoader:
         supported_extensions = [ext for ext, _mime in self.SUPPORTED_INPUT_FORMATS]
         return any(lower_path.endswith(ext) for ext in supported_extensions)
 
-    def _set_image_and_update_ui(self, image: LoadedImage) -> None:
+    def _set_image_and_update_ui(self, image: LoadedImage, copy_after_processing=False) -> None:
         """Common method to set image and update UI"""
-        self.window.set_image(image)
+        self.window.set_image(image, copy_after_processing=copy_after_processing)
 
 
 class FileDialogImageLoader(BaseImageLoader):
@@ -346,7 +349,7 @@ class ScreenshotImageLoader(BaseImageLoader):
             with open(temp_path, 'wb') as f:
                 f.write(contents)
 
-            self._set_image_and_update_ui(LoadedImage(temp_path, ImageOrigin.Screenshot))
+            self._set_image_and_update_ui(LoadedImage(temp_path, ImageOrigin.Screenshot), copy_after_processing=True)
             self.window._show_notification(_("Screenshot captured!"))
 
             if self._success_callback:
@@ -368,7 +371,7 @@ class ScreenshotImageLoader(BaseImageLoader):
 
             shutil.copy(file_path, new_path)
 
-            self._set_image_and_update_ui(LoadedImage(file_path, ImageOrigin.FakeScreenshot))
+            self._set_image_and_update_ui(LoadedImage(file_path, ImageOrigin.FakeScreenshot), copy_after_processing=True)
 
             self.window._show_notification(_("Screenshot captured!"))
 

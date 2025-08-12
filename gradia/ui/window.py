@@ -42,6 +42,7 @@ from gradia.backend.settings import Settings
 from gradia.constants import rootdir  # pyright: ignore
 from gradia.ui.dialog.delete_screenshots_dialog import DeleteScreenshotsDialog
 from gradia.ui.dialog.confirm_close_dialog import ConfirmCloseDialog
+from gradia.backend.tool_config import ToolOption
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/main_window.ui")
 class GradiaMainWindow(Adw.ApplicationWindow):
@@ -119,6 +120,12 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.create_action("screenshot", lambda *_: self.import_manager.take_screenshot(), ["<Primary>a"])
         self.create_action("open-path", lambda action, param: self.import_manager.load_from_file(param.get_string()), vt="s")
 
+        self.create_action(
+            "tool-option-changed",
+            lambda action, param: setattr(self.drawing_overlay, "options", ToolOption.deserialize(param.get_string())),
+            vt="s",
+        )
+        self.create_action("del-selected", lambda *_: self.drawing_overlay.remove_selected_action(), ["<Primary>x", "Delete"])
 
         self.create_action("open-folder", lambda *_: self.open_loaded_image_folder(), enabled=False)
         self.create_action("save", lambda *_: self.export_manager.save_to_file(), ["<Primary>s"], enabled=False)
@@ -147,15 +154,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.create_action("clear", lambda *_: self.drawing_overlay.clear_drawing())
         self.create_action("draw-mode", lambda action, param: self.drawing_overlay.set_drawing_mode(DrawingMode(param.get_string())), vt="s")
 
-        self.create_action("pen-color", lambda action, param: self._set_pen_color_from_string(param.get_string()), vt="s")
-        self.create_action("fill-color", lambda action, param: self._set_fill_color_from_string(param.get_string()), vt="s")
-        self.create_action("outline-color", lambda action, param: self._set_outline_color_from_string(param.get_string()), vt="s")
-        self.create_action("highlighter-color", lambda action, param: self._set_highlighter_color_from_string(param.get_string()), vt="s")
-        self.create_action("del-selected", lambda *_: self.drawing_overlay.remove_selected_action(), ["<Primary>x", "Delete"])
-        self.create_action("font", lambda action, param: self.drawing_overlay.settings.set_font_family(param.get_string()), vt="s")
-        self.create_action("pen-size", lambda action, param: self.drawing_overlay.settings.set_pen_size(param.get_double()), vt="d")
-        self.create_action("highlighter-size", lambda action, param: self.drawing_overlay.settings.set_highlighter_size(param.get_double()), vt="d")
-        self.create_action("number-radius", lambda action, param: self.drawing_overlay.settings.set_number_radius(param.get_double()), vt="d")
 
         self.create_action("delete-screenshots", lambda *_: self._create_delete_screenshots_dialog(), enabled=False)
 
@@ -304,17 +302,18 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     def show(self) -> None:
         self.present()
 
-    def process_image(self) -> None:
+    def process_image(self, callback=None) -> None:
         if not self.image:
             return
-
-        threading.Thread(target=self._process_in_background, daemon=True).start()
+        def worker():
+            self._process_in_background(callback)
+        threading.Thread(target=worker, daemon=True).start()
 
     """
     Private Methods
     """
 
-    def set_image(self, image: LoadedImage):
+    def set_image(self, image: LoadedImage, copy_after_processing=False):
         self.image = image
         self.drawing_overlay.clear_drawing()
         self._update_sidebar_file_info(image)
@@ -322,9 +321,15 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.toolbar_view.set_top_bar_style(Adw.ToolbarStyle.RAISED)
         self.image_stack.get_style_context().add_class("view")
         self._show_loading_state()
-        self.process_image()
-        self._set_export_ready(True)
-        self.lookup_action("open-folder").set_enabled(image.has_proper_folder())
+
+        def after_process():
+            if copy_after_processing:
+                self.export_manager.copy_to_clipboard(silent=True)
+            self._set_export_ready(True)
+            self.lookup_action("open-folder").set_enabled(image.has_proper_folder())
+
+        self.process_image(callback=after_process)
+
 
     def _show_loading_state(self) -> None:
         self.main_stack.set_visible_child_name("main")
@@ -339,37 +344,28 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.sidebar.location_row.set_subtitle(image.get_proper_folder())
         self.sidebar.set_visible(True)
 
-    def _parse_rgba(self, color_string: str) -> list[float]:
-        return list(map(float, color_string.split(',')))
-
-    def _set_pen_color_from_string(self, color_string: str) -> None:
-        self.drawing_overlay.settings.set_pen_color(*self._parse_rgba(color_string))
-
-    def _set_fill_color_from_string(self, color_string: str) -> None:
-        self.drawing_overlay.settings.set_fill_color(*self._parse_rgba(color_string))
-
-    def _set_outline_color_from_string(self, color_string: str) -> None:
-        self.drawing_overlay.settings.set_outline_color(*self._parse_rgba(color_string))
-
-    def _set_highlighter_color_from_string(self, color_string: str) -> None:
-        self.drawing_overlay.settings.set_highlighter_color(*self._parse_rgba(color_string))
-
     def _trigger_processing(self) -> None:
         if self.image:
             self.process_image()
 
-    def _process_in_background(self) -> None:
+    def _process_in_background(self, callback=None) -> None:
         try:
             if self.image is not None:
                 self.processor.set_image(self.image)
                 pixbuf, true_width, true_height = self.processor.process()
                 self._update_processed_image_size(true_width, true_height)
                 self.processed_pixbuf = pixbuf
-
             else:
                 print("No image path set for processing.")
 
-            GLib.idle_add(self._update_image_preview, priority=GLib.PRIORITY_DEFAULT)  # pyright: ignore
+            def finish():
+                self._update_image_preview()
+                if callback:
+                    callback()
+                return False
+
+            GLib.idle_add(finish, priority=GLib.PRIORITY_DEFAULT)
+
         except Exception as e:
             print(f"Error processing image: {e}")
 
