@@ -36,7 +36,7 @@ class ProviderListPage(Adw.NavigationPage):
     error_status = Gtk.Template.Child()
     providers_group = Gtk.Template.Child()
 
-    PROVIDERS_DATA_URL = f"http://localhost:8000/{rel_ver}.json"
+    PROVIDERS_DATA_URL = f"https://gradia.alexandervanhee.be/upload-providers/{rel_ver}.json"
 
     def __init__(self, preferences_dialog=None,on_provider_selected=None, **kwargs):
         super().__init__(**kwargs)
