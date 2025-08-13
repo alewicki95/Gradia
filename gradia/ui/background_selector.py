@@ -18,7 +18,7 @@
 from collections.abc import Callable
 from typing import Optional
 
-from gi.repository import GObject, Gtk, Adw
+from gi.repository import GObject, Gtk, Adw, GLib
 
 from gradia.graphics.gradient import GradientBackground
 from gradia.graphics.gradient_selector import GradientSelector
@@ -115,6 +115,11 @@ class BackgroundSelector(Adw.Bin):
     def _update_revealer_visibility(self) -> None:
         should_reveal = self.current_mode != "none"
         self.stack_revealer.set_reveal_child(should_reveal)
+
+        if should_reveal:
+            GLib.timeout_add(300, lambda: (self.stack_revealer.set_overflow(Gtk.Overflow.VISIBLE), False)[1])
+        else:
+            self.stack_revealer.set_overflow(Gtk.Overflow.HIDDEN)
 
     # TODO: Fix callback type error
     def _notify_current(self) -> None:

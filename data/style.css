@@ -15,20 +15,26 @@ headerbar.desktop windowcontrols button:active image {
     background: alpha(mix(black, white, 0.2), 0.5);
 }
 
-.image-preset-button {
+.gradient-preset, .image-preset-button {
     min-width: 80px;
     min-height: 60px;
+    box-shadow: 0 0 0 1px @borders;
     padding: 0;
-    border-radius: 10px;
-    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px;
     transition: filter 0.3s ease;
 }
 
-.image-preset-button:hover {
+.gradient-preset, .image-preset-button, .gradient-editor {
+    box-shadow: 0 0 0 1px alpha(black, 0.03),
+          0 1px 3px 1px alpha(black, .07),
+          0 2px 6px 2px alpha(black, .03);
+}
+
+.gradient-preset:hover , .image-preset-button:hover {
     filter: brightness(1.1);
 }
 
-.image-preset-button picture {
+.gradient-preset, .image-preset-button picture {
     border-radius: 9px;
 }
 
@@ -86,19 +92,6 @@ headerbar.desktop windowcontrols button:active image {
 
 .angle-entry {
   border-radius: 6px;
-}
-
-.gradient-preset {
-    min-width: 60px;
-    min-height: 40px;
-    background-size: cover;
-    border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    transition: filter 0.3s ease;
-}
-
-.gradient-preset:hover {
-    filter: brightness(1.2);
 }
 
 .monospace {
