@@ -42,7 +42,6 @@ class BackgroundSelector(Adw.Bin):
     def __init__(
         self,
         callback: Optional[Callable[[Background], None]] = None,
-        window: Optional[Gtk.Window] = None,
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
@@ -58,7 +57,7 @@ class BackgroundSelector(Adw.Bin):
 
         self.gradient_selector = GradientSelector(self.gradient, self._on_gradient_changed)
         self.solid_selector = SolidSelector(self.solid, self._on_solid_changed)
-        self.image_selector = ImageSelector(self.image, self._on_image_changed, window)
+        self.image_selector = ImageSelector(self.image, self._on_image_changed)
 
         self._setup()
 

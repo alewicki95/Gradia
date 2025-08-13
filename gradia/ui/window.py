@@ -39,7 +39,7 @@ from gradia.ui.welcome_page import WelcomePage
 from gradia.utils.aspect_ratio import *
 from gradia.ui.preferences_window import PreferencesWindow
 from gradia.backend.settings import Settings
-from gradia.constants import rootdir  # pyright: ignore
+from gradia.constants import rootdir, build_type # pyright: ignore
 from gradia.ui.dialog.delete_screenshots_dialog import DeleteScreenshotsDialog
 from gradia.ui.dialog.confirm_close_dialog import ConfirmCloseDialog
 from gradia.backend.tool_config import ToolOption
@@ -86,6 +86,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.export_manager: ExportManager = ExportManager(self, temp_dir)
         self.import_manager: ImportManager = ImportManager(self, temp_dir, self.app)
 
+        if build_type == "debug":
+            self.add_css_class("devel")
 
         self.processor: ImageProcessor = ImageProcessor()
         self._setup_actions()

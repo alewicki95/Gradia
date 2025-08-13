@@ -78,7 +78,7 @@ class ImageSidebar(Adw.Bin):
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
-
+        self._background_mode = "none"
         self.on_image_options_changed = on_image_options_changed
         self.settings = Settings()
         self._updating_widgets = False
@@ -86,13 +86,9 @@ class ImageSidebar(Adw.Bin):
         self._current_background = None
 
         self.image_options_group_content = self.image_options_group.get_first_child().get_first_child().get_next_sibling()
-
-
         self.background_selector: BackgroundSelector = BackgroundSelector(
-            callback=self._on_background_changed,
-            window=self
+            callback=self._on_background_changed
         )
-
         self.background_selector.set_current_mode_callback(self._on_background_mode_changed)
 
         self.background_selector_group.add(self.background_selector)

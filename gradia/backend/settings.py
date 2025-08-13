@@ -16,10 +16,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Gio, Gdk, Gtk, GLib
+from gradia.constants import app_id
 
 class Settings:
     def __init__(self) -> None:
-        self._settings = Gio.Settings.new("be.alexandervanhee.gradia")
+        self._settings = Gio.Settings.new(app_id)
 
     """
     Getters/Setters

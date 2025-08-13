@@ -41,6 +41,26 @@ if not PY_INSTALLDIR.found()
   error('No valid python3 binary found!')
 endif
 
+git_bin = find_program('git', required: false)
+
+# Set APPLICATION_ID and VERSION_SUFFIX
+if get_option('buildtype') == 'debug'
+  if git_bin.found()
+    VCS_TAG = run_command('git', 'rev-parse', '--short', 'HEAD', check: true).stdout().strip()
+  else
+    VCS_TAG = ''
+  endif
+  if VCS_TAG == ''
+    VERSION_SUFFIX = '-devel'
+  else
+    VERSION_SUFFIX = '-@0@'.format(VCS_TAG)
+  endif
+  APPLICATION_ID = '@0@.Devel'.format(PROJECT_RDNN_NAME)
+else
+  VERSION_SUFFIX = ''
+  APPLICATION_ID = PROJECT_RDNN_NAME
+endif
+
 # Install configuration data
 conf = configuration_data()
 conf.set('APP_ID', APPLICATION_ID)
@@ -49,7 +69,7 @@ conf.set('PKGDATA_DIR', PKGDATA_DIR)
 conf.set('DATA_DIR', join_paths(get_option('prefix'), get_option('datadir')))
 conf.set('LOCALE_DIR', join_paths(get_option('prefix'), get_option('localedir')))
 conf.set('PYTHON', PY_INSTALLDIR.full_path())
-conf.set('VERSION', meson.project_version())
+conf.set('VERSION', meson.project_version() + VERSION_SUFFIX)
 conf.set('BUILD_TYPE', get_option('buildtype'))
 conf.set('SCHEMAS_DIR', PKGDATA_DIR)
 conf.set('SOURCE_DIR', meson.current_source_dir())
