@@ -25,7 +25,7 @@ from typing import Optional
 
 from gi.repository import Adw, Gio, Xdp
 
-from gradia.constants import app_id  # pyright: ignore
+from gradia.constants import app_id, rootdir  # pyright: ignore
 from gradia.ui.window import GradiaMainWindow
 from gradia.backend.logger import Logger
 from gradia.utils.std_image_loader import StdinImageLoader
@@ -40,6 +40,9 @@ class GradiaApp(Adw.Application):
             application_id=app_id,
             flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE | Gio.ApplicationFlags.HANDLES_OPEN
         )
+
+        self.set_resource_base_path(rootdir)
+
         self.version = version
         self.temp_dirs: list[str] = []
         self._stdin_image_path: Optional[str] = None

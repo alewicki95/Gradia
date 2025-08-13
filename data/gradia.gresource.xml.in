@@ -4,6 +4,8 @@
     <file preprocess="xml-stripblanks">ui/selectors/gradient_selector.ui</file>
     <file preprocess="xml-stripblanks">ui/selectors/image_selector.ui</file>
     <file preprocess="xml-stripblanks">ui/selectors/solid_selector.ui</file>
+    <file preprocess="xml-stripblanks">ui/preferences/provider_list_page.ui</file>
+    <file preprocess="xml-stripblanks">ui/preferences/screenshot_guide_page.ui</file>
     <file preprocess="xml-stripblanks">ui/background_selector.ui</file>
     <file preprocess="xml-stripblanks">ui/drawing_tools_group.ui</file>
     <file preprocess="xml-stripblanks">ui/image_sidebar.ui</file>
@@ -71,6 +73,7 @@
     <file preprocess="xml-stripblanks">icons/scalable/actions/zoom-minus-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/fill-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/outline-color-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/engineering-symbolic.svg</file>
   </gresource>
 </gresources>
 

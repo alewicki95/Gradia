@@ -183,7 +183,7 @@ class DragDropImageLoader(BaseImageLoader):
                     self.window._show_notification(_("Not a supported image format."))
                     return False
 
-                self._set_image_and_update_ui(LoadedImage(temp_path, ImageOrigin.DragDrop))
+                self._set_image_and_update_ui(LoadedImage(file_path, ImageOrigin.DragDrop))
 
                 return True
 

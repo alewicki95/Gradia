@@ -92,7 +92,8 @@ if __name__ == '__main__':
     gi.require_version('Adw', '1')
     from gi.repository import Gio
 
-    resource = Gio.Resource.load(os.path.join(pkgdatadir, 'gradia.gresource'))
+    resource = Gio.Resource.load(
+        os.path.join(pkgdatadir, 'gradia.gresource'))
     resource._register()
 
     from gradia import main

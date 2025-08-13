@@ -17,6 +17,7 @@
 
 from typing import Optional
 from gi.repository import Adw, Gtk
+from gradia import constants
 
 
 class AboutDialog:
@@ -39,7 +40,7 @@ class AboutDialog:
             designers=[
                 "drpetrikov https://github.com/drpetrikov"
             ],
-            application_icon="be.alexandervanhee.gradia",
+            application_icon=constants.app_id,
             # Translators: This is a place to put your credits (formats: "Name https://example.com" or "Name <email@example.com>", no quotes) and is not meant to be translated literally.
             translator_credits=_("translator-credits"),
             copyright="Copyright © 2025 Alexander Vanhee",
