@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from gi.repository import Gtk, Adw
 from gradia.ui.drawing_tools_group import DrawingToolsGroup
 from gradia.ui.background_selector import BackgroundSelector
+from gradia.graphics.background import Background
 from gradia.constants import rootdir  # pyright: ignore
 from gradia.backend.settings import Settings
 
@@ -39,6 +40,7 @@ PRESET_RATIOS_DICT = dict((v, l) for l, v in PRESET_RATIOS)
 
 @dataclass
 class ImageOptions:
+    background: Background
     padding: int
     corner_radius: int
     aspect_ratio: str
@@ -72,7 +74,6 @@ class ImageSidebar(Adw.Bin):
 
     def __init__(
         self,
-        background_selector_widget: BackgroundSelector,
         on_image_options_changed: Callable[[ImageOptions], None],
         **kwargs
     ) -> None:
@@ -82,14 +83,24 @@ class ImageSidebar(Adw.Bin):
         self.settings = Settings()
         self._updating_widgets = False
         self._current_rotation = 0
-        self._background_mode = "none"
+        self._current_background = None
 
         self.image_options_group_content = self.image_options_group.get_first_child().get_first_child().get_next_sibling()
-        background_selector_widget.set_current_mode_callback(self._on_background_mode_changed)
-        self.background_selector_group.add(background_selector_widget)
+
+
+        self.background_selector: BackgroundSelector = BackgroundSelector(
+            callback=self._on_background_changed,
+            window=self
+        )
+
+        self.background_selector.set_current_mode_callback(self._on_background_mode_changed)
+
+        self.background_selector_group.add(self.background_selector)
         self._setup_widgets()
         self._setup_aspect_ratio_popover()
         self._connect_signals()
+
+
 
     def _setup_widgets(self) -> None:
         self.padding_adjustment.set_value(self.settings.image_padding)
@@ -161,6 +172,11 @@ class ImageSidebar(Adw.Bin):
         main_box.append(bottom_box)
         self.aspect_ratio_popover.set_child(main_box)
         self.aspect_ratio_button.set_popover(self.aspect_ratio_popover)
+
+    def _on_background_changed(self, updated_background: Background) -> None:
+        self._current_background = updated_background
+        if updated_background != None:
+            self._notify_image_options_changed()
 
     def _on_preset_ratio_selected(self, ratio: str) -> None:
         self.aspect_ratio_button.set_label(self._label_for_ratio_value(ratio))
@@ -238,7 +254,8 @@ class ImageSidebar(Adw.Bin):
             aspect_ratio=self._ratio_value_from_label(self.aspect_ratio_button.get_label()),
             shadow_strength=int(self.shadow_strength_scale.get_value()),
             auto_balance=self.auto_balance_toggle.get_active(),
-            rotation=self._current_rotation
+            rotation=self._current_rotation,
+            background=self._current_background
         )
 
     def _get_default_options(self) -> ImageOptions:
@@ -248,7 +265,8 @@ class ImageSidebar(Adw.Bin):
             aspect_ratio="",
             shadow_strength=0,
             auto_balance=self.auto_balance_toggle.get_active(),
-            rotation=self._current_rotation
+            rotation=self._current_rotation,
+            background = None
         )
 
     def _get_settings_options(self) -> ImageOptions:

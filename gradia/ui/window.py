@@ -86,15 +86,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.export_manager: ExportManager = ExportManager(self, temp_dir)
         self.import_manager: ImportManager = ImportManager(self, temp_dir, self.app)
 
-        self.background_selector: BackgroundSelector = BackgroundSelector(
-            callback=self._on_background_changed,
-            window=self
-        )
 
-        self.processor: ImageProcessor = ImageProcessor(
-            padding=5,
-            background=self.background_selector.get_current_background()
-        )
+        self.processor: ImageProcessor = ImageProcessor()
         self._setup_actions()
         self._setup_image_stack()
         self._setup_sidebar()
@@ -175,7 +168,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
     def _setup_sidebar(self) -> None:
         self.sidebar = ImageSidebar(
-            background_selector_widget=self.background_selector,
             on_image_options_changed=self.on_image_options_changed,
         )
 
@@ -211,12 +203,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     Callbacks
     """
 
-    def _on_background_changed(self, updated_background: Background) -> None:
-        if (getattr(self, "processor", None)):
-            self.processor.background = updated_background
-            self._trigger_processing()
-
     def on_image_options_changed(self, options: ImageOptions):
+        self.processor.background = options.background
         self.processor.padding = options.padding
         self.processor.corner_radius = options.corner_radius
 
@@ -234,6 +222,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.processor.shadow_strength = options.shadow_strength
         self.processor.auto_balance = options.auto_balance
         self.processor.rotation = options.rotation
+
         self._trigger_processing()
 
     def _on_about_activated(self, action: Gio.SimpleAction, param: GObject.ParamSpec) -> None:
