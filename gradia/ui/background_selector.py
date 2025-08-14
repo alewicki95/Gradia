@@ -114,10 +114,16 @@ class BackgroundSelector(Adw.Bin):
 
     def _update_revealer_visibility(self) -> None:
         should_reveal = self.current_mode != "none"
+        currently_revealed = self.stack_revealer.get_child_revealed()
         self.stack_revealer.set_reveal_child(should_reveal)
 
         if should_reveal:
-            GLib.timeout_add(300, lambda: (self.stack_revealer.set_overflow(Gtk.Overflow.VISIBLE), False)[1])
+            if not currently_revealed:
+                GLib.timeout_add(300, lambda: (
+                    self.stack_revealer.set_overflow(Gtk.Overflow.VISIBLE), False
+                )[1])
+            else:
+                self.stack_revealer.set_overflow(Gtk.Overflow.VISIBLE)
         else:
             self.stack_revealer.set_overflow(Gtk.Overflow.HIDDEN)
 
