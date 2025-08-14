@@ -14,6 +14,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+
 from typing import Any
 from gi.repository import Gtk, Gdk, Graphene
 
@@ -24,20 +25,41 @@ class TransparencyBackground(Gtk.Widget):
         super().__init__(**kwargs)
         self.picture_widget: Gtk.Picture | None = None
         self.square_size = 20
+        self.max_tiles_x = 20
+        self.max_tiles_y = 20
 
     def do_snapshot(self, snapshot: Gtk.Snapshot) -> None:
-        offset_x, offset_y, display_width, display_height = self._get_image_bounds()
+        offset_x, offset_y, display_width, display_height, square_size_scaled = self._calculate_geometry()
+
+        if display_width <= 0 or display_height <= 0:
+            return
 
         light_gray = Gdk.RGBA(red=0.9, green=0.9, blue=0.9, alpha=1.0)
         dark_gray = Gdk.RGBA(red=0.7, green=0.7, blue=0.7, alpha=1.0)
 
-        start_x = int(offset_x)
-        start_y = int(offset_y)
-        end_x = int(offset_x + display_width)
-        end_y = int(offset_y + display_height)
+        bounds = Graphene.Rect.alloc().init(offset_x, offset_y, display_width, display_height)
+        snapshot.append_color(light_gray, bounds)
 
-        bg_rect = Graphene.Rect.alloc().init(start_x, start_y, display_width, display_height)
-        snapshot.append_color(light_gray, bg_rect)
+        tile_size = 2 * square_size_scaled
+        child_bounds = Graphene.Rect.alloc().init(offset_x, offset_y, tile_size, tile_size)
+
+        snapshot.push_repeat(bounds, child_bounds)
+        dark_square_1 = Graphene.Rect.alloc().init(offset_x + square_size_scaled, offset_y,
+                                                  square_size_scaled, square_size_scaled)
+        snapshot.append_color(dark_gray, dark_square_1)
+
+        dark_square_2 = Graphene.Rect.alloc().init(offset_x, offset_y + square_size_scaled,
+                                                  square_size_scaled, square_size_scaled)
+        snapshot.append_color(dark_gray, dark_square_2)
+        snapshot.pop()
+
+    def set_picture_reference(self, picture: Gtk.Picture) -> None:
+        self.picture_widget = picture
+        if picture:
+            picture.connect("notify::paintable", lambda *args: self.queue_draw())
+
+    def _calculate_geometry(self) -> tuple[float, float, float, float, float]:
+        offset_x, offset_y, display_width, display_height = self._get_image_bounds()
 
         scale = 1.0
         if self.picture_widget and self.picture_widget.get_paintable():
@@ -46,28 +68,14 @@ class TransparencyBackground(Gtk.Widget):
             if image_width > 0 and image_height > 0:
                 scale = min(display_width / image_width, display_height / image_height)
 
-        if scale > 0:
-            square_size_scaled = self.square_size * scale
-            num_cols = int(display_width // square_size_scaled) + 1
-            num_rows = int(display_height // square_size_scaled) + 1
+        if scale <= 0:
+            return offset_x, offset_y, display_width, display_height, 0
 
-            for row in range(num_rows):
-                for col in range(num_cols):
-                    if (row + col) % 2 == 1:
-                        square_x = start_x + col * square_size_scaled
-                        square_y = start_y + row * square_size_scaled
-                        square_w = min(square_size_scaled, end_x - square_x)
-                        square_h = min(square_size_scaled, end_y - square_y)
+        max_tile_width = display_width / self.max_tiles_x
+        max_tile_height = display_height / self.max_tiles_y
+        square_size_scaled = max(self.square_size * scale, max_tile_width, max_tile_height)
 
-                        if square_w > 0 and square_h > 0:
-                            square_rect = Graphene.Rect.alloc().init(square_x, square_y, square_w, square_h)
-                            snapshot.append_color(dark_gray, square_rect)
-
-
-    def set_picture_reference(self, picture: Gtk.Picture) -> None:
-        self.picture_widget = picture
-        if picture:
-            picture.connect("notify::paintable", lambda *args: self.queue_draw())
+        return offset_x, offset_y, display_width, display_height, square_size_scaled
 
     def _get_image_bounds(self) -> tuple[float, float, float, float]:
         if not self.picture_widget or not self.picture_widget.get_paintable():
@@ -89,3 +97,4 @@ class TransparencyBackground(Gtk.Widget):
         offset_y = (widget_height - display_height) / 2
 
         return offset_x, offset_y, display_width, display_height
+
