@@ -17,8 +17,9 @@
 
 import gi
 gi.require_version("Soup", "3.0")
+gi.require_version("GtkSource", "5")
 
-from gi.repository import Gtk, Adw, GLib, Gdk, Soup, GdkPixbuf
+from gi.repository import Gtk, Adw, GLib, Gdk, Soup, GdkPixbuf, GtkSource, Gio
 from gradia.backend.settings import Settings
 from gradia.backend.logger import Logger
 from gradia.constants import rel_ver
@@ -194,116 +195,103 @@ class ProviderListPage(Adw.NavigationPage):
 
         picture.set_size_request(32, 32)
 
+@Gtk.Template(resource_path=f"{rootdir}/ui/preferences/custom_provider_page.ui")
 class CustomProviderPage(Adw.NavigationPage):
     __gtype_name__ = 'CustomProviderPage'
+    custom_save_button = Gtk.Template.Child()
+    source_view = Gtk.Template.Child()
 
     def __init__(self, preferences_dialog: Adw.NavigationView, on_provider_selected=None, **kwargs):
-        super().__init__(title=_("Custom Provider"), **kwargs)
-
+        GtkSource.init()
+        super().__init__(**kwargs)
         self.preferences_dialog = preferences_dialog
         self.on_provider_selected = on_provider_selected
+        self._original_text = "echo $1"
 
-        header_bar = Adw.HeaderBar()
-        save_button = Gtk.Button(label=_("Save"))
-        save_button.add_css_class("suggested-action")
-        save_button.connect("clicked", self._on_save_custom_provider)
-        save_button.set_sensitive(False)
-        header_bar.pack_end(save_button)
-        self.custom_save_button = save_button
 
-        content = Adw.ToolbarView()
-        content.add_top_bar(header_bar)
+        self._setup_source_view()
+        self._setup_theme_monitoring()
+        self._setup_buffer_monitoring()
 
-        scrolled = Gtk.ScrolledWindow(
-            hscrollbar_policy=Gtk.PolicyType.NEVER,
-            vscrollbar_policy=Gtk.PolicyType.AUTOMATIC
-        )
+        self.custom_save_button.add_css_class("suggested-action")
+        self.source_view.add_css_class("provider-source-view")
 
-        clamp = Adw.Clamp(
-            maximum_size=600,
-            tightening_threshold=400,
-            margin_top=24,
-            margin_bottom=24,
-            margin_start=12,
-            margin_end=12
-        )
+    def _setup_source_view(self):
+        buffer = self.source_view.get_buffer()
+        language_manager = GtkSource.LanguageManager.get_default()
+        language = language_manager.get_language('bash')
+        if language:
+            buffer.set_language(language)
 
-        main_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            spacing=24
-        )
+        self._update_theme()
+        buffer.set_text(self._original_text)
 
-        command_section = Adw.PreferencesGroup(
-            title=_("Upload Command"),
-            description=_("Enter a custom command to upload files. Use $1 as a placeholder for the file path.")
-        )
+    def _setup_theme_monitoring(self):
+        settings = Gtk.Settings.get_default()
+        settings.connect('notify::gtk-application-prefer-dark-theme', self._on_theme_changed)
+        adwaita_settings = Gio.Settings.new('org.gnome.desktop.interface')
+        adwaita_settings.connect('changed::color-scheme', self._on_color_scheme_changed)
 
-        command_row = Adw.ActionRow(
-            title=_("Command")
-        )
-        command_row.set_activatable(False)
+    def _setup_buffer_monitoring(self):
+        buffer = self.source_view.get_buffer()
+        buffer.connect('changed', self._on_buffer_changed)
+        self._update_save_button_sensitivity()
 
-        command_buffer = Gtk.TextBuffer()
-        command_buffer.connect("changed", self._on_custom_field_changed)
-        self.custom_command_buffer = command_buffer
+    def _on_theme_changed(self, settings, pspec):
+        self._update_theme()
 
-        command_text_view = Gtk.TextView(
-            buffer=command_buffer,
-            wrap_mode=Gtk.WrapMode.WORD,
-            accepts_tab=False,
-            monospace=True,
-            height_request=80
-        )
+    def _on_color_scheme_changed(self, settings, key):
+        self._update_theme()
 
-        command_scrolled = Gtk.ScrolledWindow(
-            hscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
-            vscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
-            child=command_text_view,
-            margin_top=6,
-            margin_bottom=6,
-            margin_start=6,
-            margin_end=6
-        )
-        command_scrolled.add_css_class("card")
+    def _on_buffer_changed(self, buffer):
+        self._update_save_button_sensitivity()
 
-        command_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            spacing=6
-        )
-        command_box.append(command_scrolled)
+    def _update_theme(self):
+        buffer = self.source_view.get_buffer()
+        style_scheme_manager = GtkSource.StyleSchemeManager.get_default()
+        prefer_dark = self._is_dark_theme_preferred()
+        buffer.set_style_scheme(style_scheme_manager.get_scheme('Adwaita-dark' if prefer_dark else 'Adwaita') or buffer.get_style_scheme())
 
-        command_row.set_child(command_box)
-        command_section.add(command_row)
+    def _is_dark_theme_preferred(self):
+        gtk_settings = Gtk.Settings.get_default()
+        return gtk_settings.get_property('gtk-application-prefer-dark-theme')
 
-        main_box.append(command_section)
+    def _update_save_button_sensitivity(self):
+        buffer = self.source_view.get_buffer()
+        start_iter = buffer.get_start_iter()
+        end_iter = buffer.get_end_iter()
+        text = buffer.get_text(start_iter, end_iter, False).strip()
+        has_changed = text != self._original_text.strip()
+        is_not_empty = len(text) > 0
+        self.custom_save_button.set_sensitive(has_changed and is_not_empty)
 
-        clamp.set_child(main_box)
-        scrolled.set_child(clamp)
-        content.set_content(scrolled)
-        self.set_child(content)
-
-    def _on_custom_field_changed(self, widget):
-        start_iter = self.custom_command_buffer.get_start_iter()
-        end_iter = self.custom_command_buffer.get_end_iter()
-        command = self.custom_command_buffer.get_text(start_iter, end_iter, False).strip()
-
-        can_save = bool(command)
-        self.custom_save_button.set_sensitive(can_save)
-
+    @Gtk.Template.Callback()
     def _on_save_custom_provider(self, button: Gtk.Button):
-        start_iter = self.custom_command_buffer.get_start_iter()
-        end_iter = self.custom_command_buffer.get_end_iter()
-        command = self.custom_command_buffer.get_text(start_iter, end_iter, False).strip()
+        buffer = self.source_view.get_buffer()
+        start_iter = buffer.get_start_iter()
+        end_iter = buffer.get_end_iter()
+        command = buffer.get_text(start_iter, end_iter, False)
 
-        if command:
-            if self.on_provider_selected:
-                self.on_provider_selected(_("Custom"), command)
+        if self.on_provider_selected:
+            self.on_provider_selected(_("Custom"), command)
             self.preferences_dialog.pop_subpage()
             self.preferences_dialog.pop_subpage()
 
+        self._update_save_button_sensitivity()
 
+@Gtk.Template(resource_path=f"{rootdir}/ui/preferences/provider_detail_page.ui")
 class ProviderDetailPage(Adw.NavigationPage):
     __gtype_name__ = 'ProviderDetailPage'
+
+    title_label = Gtk.Template.Child()
+    subtitle_label = Gtk.Template.Child()
+    provider_picture = Gtk.Template.Child()
+    details_group = Gtk.Template.Child()
+    homepage_row = Gtk.Template.Child()
+    tos_row = Gtk.Template.Child()
+    features_group = Gtk.Template.Child()
+    command_group = Gtk.Template.Child()
+    command_label = Gtk.Template.Child()
 
     def __init__(self, preferences_dialog: Adw.NavigationView, provider_id: str, providers_data: dict,
                  session: Soup.Session, on_provider_selected=None, **kwargs):
@@ -315,87 +303,35 @@ class ProviderDetailPage(Adw.NavigationPage):
         self.providers_data = providers_data
         self.session = session
         self.on_provider_selected = on_provider_selected
+        self.homepage_url = None
+        self.tos_url = None
 
-        header_bar = Adw.HeaderBar()
-        select_button = Gtk.Button(label=_("Select"))
-        select_button.add_css_class("suggested-action")
-        select_button.connect("clicked", self._on_select_provider)
-        header_bar.pack_end(select_button)
+        self._setup_ui()
 
-        content = Adw.ToolbarView()
-        content.add_top_bar(header_bar)
+    def _setup_ui(self):
+        self.title_label.set_label(self.provider_data["name"])
+        self.subtitle_label.set_label(self.provider_data["description"])
+        self.details_group.set_description(self.provider_data["details"])
 
-        clamp = Adw.Clamp(maximum_size=600, tightening_threshold=400)
+        self._load_picture_from_url(self.provider_picture, self.provider_data.get("icon_url"), 64)
 
-        main_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            spacing=24,
-            margin_top=24,
-            margin_bottom=24,
-            margin_start=24,
-            margin_end=24
-        )
-
-        header_box = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL,
-            spacing=12,
-            halign=Gtk.Align.START
-        )
-
-        picture = Gtk.Picture(
-            width_request=48,
-            height_request=48,
-            content_fit=Gtk.ContentFit.COVER
-        )
-        self._load_picture_from_url(picture, self.provider_data.get("icon_url"), 64, fallback_icon_name="image-missing-symbolic")
-
-        title_box = Gtk.Box(
-            orientation=Gtk.Orientation.VERTICAL,
-            halign=Gtk.Align.START,
-            valign=Gtk.Align.CENTER
-        )
-
-        title_label = Gtk.Label(label=self.provider_data["name"], halign=Gtk.Align.START)
-        title_label.add_css_class("title-2")
-
-        subtitle_label = Gtk.Label(label=self.provider_data["description"], halign=Gtk.Align.START)
-        subtitle_label.add_css_class("dim-label")
-
-        title_box.append(title_label)
-        title_box.append(subtitle_label)
-
-        header_box.append(picture)
-        header_box.append(title_box)
-        main_box.append(header_box)
-
-        details_group = Adw.PreferencesGroup(title=_("About"), description=self.provider_data["details"])
         if self.provider_data.get("homepage_url"):
-            homepage_row = Adw.ActionRow(
-                title=_("Homepage"),
-                subtitle=self.provider_data["homepage_url"],
-                activatable=True
-            )
-            homepage_row.add_prefix(Gtk.Image.new_from_icon_name("house-symbolic"))
-            homepage_row.add_suffix(Gtk.Image.new_from_icon_name("adw-external-link-symbolic"))
-            homepage_row.connect("activated", self._on_link_activated, self.provider_data["homepage_url"])
-            details_group.add(homepage_row)
+            self.homepage_url = self.provider_data["homepage_url"]
+            self.homepage_row.set_subtitle(self.homepage_url)
+            self.homepage_row.set_visible(True)
 
         if self.provider_data.get("tos_url"):
-            tos_row = Adw.ActionRow(
-                title=_("Terms of Service"),
-                subtitle=self.provider_data["tos_url"],
-                activatable=True
-            )
-            tos_row.add_prefix(Gtk.Image.new_from_icon_name("text-x-generic-symbolic"))
-            tos_row.add_suffix(Gtk.Image.new_from_icon_name("adw-external-link-symbolic"))
-            tos_row.connect("activated", self._on_link_activated, self.provider_data["tos_url"])
-            details_group.add(tos_row)
+            self.tos_url = self.provider_data["tos_url"]
+            self.tos_row.set_subtitle(self.tos_url)
+            self.tos_row.set_visible(True)
 
-        main_box.append(details_group)
+        self._setup_features()
+        self._setup_command()
 
-        features_group = Adw.PreferencesGroup(title=_("Features"))
+    def _setup_features(self):
         for feature in self.provider_data.get("features", []):
             row = Adw.ActionRow(title=feature["text"])
+
             if feature["type"] == "positive":
                 icon_name = "object-select-symbolic"
                 css_class = "success"
@@ -409,49 +345,15 @@ class ProviderDetailPage(Adw.NavigationPage):
             icon = Gtk.Image.new_from_icon_name(icon_name)
             icon.add_css_class(css_class)
             row.add_prefix(icon)
-            features_group.add(row)
-        main_box.append(features_group)
+            self.features_group.add(row)
 
+    def _setup_command(self):
         upload_command = self.provider_data.get("upload_command")
         if upload_command:
-            command_group = Adw.PreferencesGroup(title=_("Upload Command"))
-            command_label = Gtk.Label(
-                label=upload_command,
-                xalign=0,
-                wrap=False,
-                margin_top=10,
-                margin_bottom=10,
-                margin_start=10,
-                margin_end=10
-            )
-            command_label.add_css_class("monospace")
+            self.command_label.set_label(upload_command)
+            self.command_group.set_visible(True)
 
-            command_scrolled_window = Gtk.ScrolledWindow(
-                hscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
-                vscrollbar_policy=Gtk.PolicyType.NEVER,
-                child=command_label,
-                hexpand=True,
-            )
-
-            command_row = Adw.ActionRow(title="")
-            command_row.set_activatable(False)
-            command_row.set_selectable(False)
-            command_row.set_child(command_scrolled_window)
-
-            command_group.add(command_row)
-            main_box.append(command_group)
-
-        clamp.set_child(main_box)
-
-        scrolled = Gtk.ScrolledWindow(
-            hscrollbar_policy=Gtk.PolicyType.NEVER,
-            vscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
-            child=clamp
-        )
-
-        content.set_content(scrolled)
-        self.set_child(content)
-
+    @Gtk.Template.Callback()
     def _on_select_provider(self, button: Gtk.Button):
         name = self.provider_data["name"]
         command = self.provider_data.get("upload_command")
@@ -462,7 +364,15 @@ class ProviderDetailPage(Adw.NavigationPage):
         self.preferences_dialog.pop_subpage()
         self.preferences_dialog.pop_subpage()
 
-    def _on_link_activated(self, row: Adw.ActionRow, url: str):
+    @Gtk.Template.Callback()
+    def _on_link_activated(self, row: Adw.ActionRow):
+        if row == self.homepage_row and self.homepage_url:
+            url = self.homepage_url
+        elif row == self.tos_row and self.tos_url:
+            url = self.tos_url
+        else:
+            return
+
         launcher = Gtk.UriLauncher.new(url)
         launcher.launch(None, None, None, None)
 

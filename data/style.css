@@ -24,10 +24,14 @@ headerbar.desktop windowcontrols button:active image {
     transition: filter 0.3s ease;
 }
 
-.gradient-preset, .image-preset-button, .gradient-editor {
+.gradient-preset, .image-preset-button, .gradient-editor, .provider-source-view{
     box-shadow: 0 0 0 1px alpha(black, 0.03),
           0 1px 3px 1px alpha(black, .07),
           0 2px 6px 2px alpha(black, .03);
+}
+
+.provider-source-view {
+    border-radius:12px;
 }
 
 .gradient-preset:hover , .image-preset-button:hover {
@@ -97,7 +101,6 @@ headerbar.desktop windowcontrols button:active image {
 .monospace {
   font-family: monospace;
 }
-
 
 .recent-button{
     background-size: cover;
