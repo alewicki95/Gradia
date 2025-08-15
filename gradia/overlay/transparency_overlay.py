@@ -24,7 +24,7 @@ class TransparencyBackground(Gtk.Widget):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.picture_widget: Gtk.Picture | None = None
-        self.square_size = 20
+        self.square_size = 10
         self.max_tiles_x = 20
         self.max_tiles_y = 20
 
