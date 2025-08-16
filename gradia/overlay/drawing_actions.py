@@ -504,16 +504,13 @@ class CensorAction(RectAction):
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
         x1, y1 = image_to_widget_coords(*self.start)
         x2, y2 = image_to_widget_coords(*self.end)
-
         x, y = min(x1, x2), min(y1, y2)
         width, height = abs(x2 - x1), abs(y2 - y1)
-
         if width < 1 or height < 1:
             return
         crop = self._get_image_crop()
         if not crop:
             return
-
         self._draw_pixelation(cr, crop, x, y, width, height)
 
     def _draw_pixelation(self, cr: cairo.Context, crop: dict, x: float, y: float, width: float, height: float):
@@ -524,16 +521,20 @@ class CensorAction(RectAction):
         blocks_x = max(1, int(width / self.block_size))
         blocks_y = max(1, int(height / self.block_size))
 
-        tiny_surface = cairo.ImageSurface(cairo.FORMAT_RGB24, blocks_x, blocks_y)
+        tiny_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, blocks_x, blocks_y)
         tiny_cr = cairo.Context(tiny_surface)
+
+        tiny_cr.set_operator(cairo.OPERATOR_CLEAR)
+        tiny_cr.paint()
+        tiny_cr.set_operator(cairo.OPERATOR_OVER)
 
         tiny_cr.scale(blocks_x / crop['width'], blocks_y / crop['height'])
         tiny_cr.translate(-crop['x'], -crop['y'])
         Gdk.cairo_set_source_pixbuf(tiny_cr, self.background_pixbuf, 0, 0)
         tiny_cr.paint()
+
         cr.translate(x, y)
         cr.scale(width / blocks_x, height / blocks_y)
-
         pattern = cairo.SurfacePattern(tiny_surface)
         pattern.set_filter(cairo.FILTER_NEAREST)
         cr.set_source(pattern)
@@ -543,15 +544,12 @@ class CensorAction(RectAction):
 
     def _get_image_crop(self) -> dict | None:
         img_w, img_h = self.background_pixbuf.get_width(), self.background_pixbuf.get_height()
-
         x1 = int(self.start[0] + img_w / 2)
         y1 = int(self.start[1] + img_h / 2)
         x2 = int(self.end[0] + img_w / 2)
         y2 = int(self.end[1] + img_h / 2)
-
         x_start, x_end = sorted([max(0, min(x1, img_w)), max(0, min(x2, img_w))])
         y_start, y_end = sorted([max(0, min(y1, img_h)), max(0, min(y2, img_h))])
-
         width, height = x_end - x_start, y_end - y_start
         return {'x': x_start, 'y': y_start, 'width': width, 'height': height} if width > 0 and height > 0 else None
 
