@@ -497,133 +497,63 @@ class HighlighterAction(StrokeAction):
 
 class CensorAction(RectAction):
     def __init__(self, start: tuple[int, int], end: tuple[int, int], background_pixbuf: GdkPixbuf.Pixbuf, options):
-        super().__init__(start, end, False ,options)
-        self.pixelation_level = 8
+        super().__init__(start, end, False, options)
+        self.block_size = 8
         self.background_pixbuf = background_pixbuf
 
-    def set_background(self, pixbuf: GdkPixbuf.Pixbuf):
-        self.background_pixbuf = pixbuf
-
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
-        rect = self._get_widget_rect(image_to_widget_coords)
-        if not rect or not self.background_pixbuf:
-            return self._draw_fallback(cr, rect)
+        x1, y1 = image_to_widget_coords(*self.start)
+        x2, y2 = image_to_widget_coords(*self.end)
 
-        crop = self._get_crop_region()
+        x, y = min(x1, x2), min(y1, y2)
+        width, height = abs(x2 - x1), abs(y2 - y1)
+
+        if width < 1 or height < 1:
+            return
+        crop = self._get_image_crop()
         if not crop:
             return
 
-        cropped = self._crop_pixbuf(crop)
-        if not cropped:
-            return
+        self._draw_pixelation(cr, crop, x, y, width, height)
 
-        pixel_size = self.pixelation_level
-        small = cropped.scale_simple(
-            max(1, cropped.get_width() // pixel_size),
-            max(1, cropped.get_height() // pixel_size),
-            GdkPixbuf.InterpType.NEAREST
-        )
+    def _draw_pixelation(self, cr: cairo.Context, crop: dict, x: float, y: float, width: float, height: float):
+        cr.save()
+        cr.rectangle(x, y, width, height)
+        cr.clip()
 
-        randomized = self._randomize_pixels(small)
-        if not randomized:
-            return
+        blocks_x = max(1, int(width / self.block_size))
+        blocks_y = max(1, int(height / self.block_size))
 
-        pixelated = randomized.scale_simple(
-            int(rect['width']),
-            int(rect['height']),
-            GdkPixbuf.InterpType.NEAREST
-        )
+        tiny_surface = cairo.ImageSurface(cairo.FORMAT_RGB24, blocks_x, blocks_y)
+        tiny_cr = cairo.Context(tiny_surface)
 
-        self._draw_pixbuf(cr, pixelated, rect)
+        tiny_cr.scale(blocks_x / crop['width'], blocks_y / crop['height'])
+        tiny_cr.translate(-crop['x'], -crop['y'])
+        Gdk.cairo_set_source_pixbuf(tiny_cr, self.background_pixbuf, 0, 0)
+        tiny_cr.paint()
+        cr.translate(x, y)
+        cr.scale(width / blocks_x, height / blocks_y)
 
-    def _get_widget_rect(self, transform: Callable[[int, int], tuple[float, float]]) -> dict | None:
-        x1, y1 = transform(*self.start)
-        x2, y2 = transform(*self.end)
-        rect = {
-            'x': min(x1, x2),
-            'y': min(y1, y2),
-            'width': abs(x2 - x1),
-            'height': abs(y2 - y1)
-        }
-        return rect if rect['width'] >= 1 and rect['height'] >= 1 else None
+        pattern = cairo.SurfacePattern(tiny_surface)
+        pattern.set_filter(cairo.FILTER_NEAREST)
+        cr.set_source(pattern)
+        cr.paint()
 
-    def _draw_fallback(self, cr: cairo.Context, rect: dict | None):
-        if rect:
-            cr.set_source_rgba(0.5, 0.5, 0.5, 0.8)
-            cr.rectangle(rect['x'], rect['y'], rect['width'], rect['height'])
-            cr.fill()
+        cr.restore()
 
-    def _get_crop_region(self) -> dict | None:
+    def _get_image_crop(self) -> dict | None:
         img_w, img_h = self.background_pixbuf.get_width(), self.background_pixbuf.get_height()
 
-        x1_intrinsic_tl = int(self.start[0] + img_w / 2)
-        y1_intrinsic_tl = int(self.start[1] + img_h / 2)
-        x2_intrinsic_tl = int(self.end[0] + img_w / 2)
-        y2_intrinsic_tl = int(self.end[1] + img_h / 2)
+        x1 = int(self.start[0] + img_w / 2)
+        y1 = int(self.start[1] + img_h / 2)
+        x2 = int(self.end[0] + img_w / 2)
+        y2 = int(self.end[1] + img_h / 2)
 
-        x_crop_start, x_crop_end = sorted((x1_intrinsic_tl, x2_intrinsic_tl))
-        y_crop_start, y_crop_end = sorted((y1_intrinsic_tl, y2_intrinsic_tl))
+        x_start, x_end = sorted([max(0, min(x1, img_w)), max(0, min(x2, img_w))])
+        y_start, y_end = sorted([max(0, min(y1, img_h)), max(0, min(y2, img_h))])
 
-        x_crop_start = max(0, min(x_crop_start, img_w - 1))
-        x_crop_end = max(0, min(x_crop_end, img_w - 1))
-        y_crop_start = max(0, min(y_crop_start, img_h - 1))
-        y_crop_end = max(0, min(y_crop_end, img_h - 1))
-
-        crop_w = x_crop_end - x_crop_start
-        crop_h = y_crop_end - y_crop_start
-
-        if crop_w <= 0 or crop_h <= 0:
-            return None
-
-        return {'x': x_crop_start, 'y': y_crop_start, 'width': crop_w, 'height': crop_h}
-
-
-    def _crop_pixbuf(self, crop: dict) -> GdkPixbuf.Pixbuf | None:
-        try:
-            return GdkPixbuf.Pixbuf.new_subpixbuf(
-                self.background_pixbuf,
-                crop['x'], crop['y'],
-                crop['width'], crop['height']
-            )
-        except Exception as e:
-            print(f"Crop failed: {e}")
-            return None
-
-    def _randomize_pixels(self, pixbuf: GdkPixbuf.Pixbuf) -> GdkPixbuf.Pixbuf | None:
-        pixels = bytearray(pixbuf.get_pixels())
-        w, h = pixbuf.get_width(), pixbuf.get_height()
-        stride, channels = pixbuf.get_rowstride(), pixbuf.get_n_channels()
-        offsets = [(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(1,-1),(-1,1),(1,1)]
-        random.seed(start_time_seed)
-
-        for y in range(h):
-            for x in range(w):
-                if random.random() < 0.3:
-                    neighbors = [(x+dx, y+dy) for dx, dy in offsets if 0 <= x+dx < w and 0 <= y+dy < h]
-                    if neighbors:
-                        nx, ny = random.choice(neighbors)
-                        i1 = y * stride + x * channels
-                        i2 = ny * stride + nx * channels
-                        for c in range(channels):
-                            pixels[i1 + c], pixels[i2 + c] = pixels[i2 + c], pixels[i1 + c]
-
-        try:
-            return GdkPixbuf.Pixbuf.new_from_data(
-                bytes(pixels),
-                GdkPixbuf.Colorspace.RGB,
-                pixbuf.get_has_alpha(),
-                8, w, h, stride
-            )
-        except Exception as e:
-            print(f"Randomize failed: {e}")
-            return None
-
-    def _draw_pixbuf(self, cr: cairo.Context, pixbuf: GdkPixbuf.Pixbuf, rect: dict):
-        cr.save()
-        Gdk.cairo_set_source_pixbuf(cr, pixbuf, rect['x'], rect['y'])
-        cr.rectangle(rect['x'], rect['y'], rect['width'], rect['height'])
-        cr.fill()
-        cr.restore()
+        width, height = x_end - x_start, y_end - y_start
+        return {'x': x_start, 'y': y_start, 'width': width, 'height': height} if width > 0 and height > 0 else None
 
 class NumberStampAction(DrawingAction):
     def __init__(self, position: tuple[int, int], number: int, options):
