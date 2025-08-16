@@ -236,13 +236,82 @@ class TextAction(DrawingAction):
                 return True
         return False
 
-    def draw_rounded_rectangle(self, cr: cairo.Context, x: float, y: float, width: float, height: float, radius: float):
+    def draw_rounded_rectangle(self, cr: cairo.Context, x: float, y: float, width: float, height: float, radius: float, round_top: bool = True, round_bottom: bool = True):
         cr.new_sub_path()
-        cr.arc(x + radius, y + radius, radius, math.pi, 3 * math.pi / 2)
-        cr.arc(x + width - radius, y + radius, radius, 3 * math.pi / 2, 0)
-        cr.arc(x + width - radius, y + height - radius, radius, 0, math.pi / 2)
-        cr.arc(x + radius, y + height - radius, radius, math.pi / 2, math.pi)
+        if round_top:
+            cr.arc(x + radius, y + radius, radius, math.pi, 3 * math.pi / 2)
+            cr.arc(x + width - radius, y + radius, radius, 3 * math.pi / 2, 0)
+        else:
+            cr.move_to(x, y)
+            cr.line_to(x + width, y)
+
+        if round_bottom:
+            cr.arc(x + width - radius, y + height - radius, radius, 0, math.pi / 2)
+            cr.arc(x + radius, y + height - radius, radius, math.pi / 2, math.pi)
+        else:
+            cr.line_to(x + width, y + height)
+            cr.line_to(x, y + height)
+
         cr.close_path()
+
+    def draw_per_line_background(self, cr: cairo.Context, layout, text_x_widget: float, text_y_widget: float, scale: float):
+        lines = self.text.split('\n')
+        if len(lines) <= 1:
+            _, logical_rect = layout.get_extents()
+            text_width_widget = logical_rect.width / Pango.SCALE
+            text_height_widget = logical_rect.height / Pango.SCALE
+
+            bg_x_widget = text_x_widget - self.PADDING_X_IMG * scale
+            bg_y_widget = text_y_widget - self.PADDING_Y_IMG * scale
+            bg_width_widget = text_width_widget + 2 * self.PADDING_X_IMG * scale
+            bg_height_widget = text_height_widget + 2 * self.PADDING_Y_IMG * scale
+
+            radius = min(6.0 * scale, min(bg_width_widget, bg_height_widget) / 4)
+            self.draw_rounded_rectangle(cr, bg_x_widget, bg_y_widget, bg_width_widget, bg_height_widget, radius)
+            cr.fill()
+            return
+
+        line_heights = []
+        line_widths = []
+
+        _, overall_logical_rect = layout.get_extents()
+        overall_width = overall_logical_rect.width / Pango.SCALE
+
+        for line in lines:
+            temp_layout = PangoCairo.create_layout(cr)
+            font_desc = Pango.FontDescription()
+            font_desc.set_family(self.font_family)
+            font_desc.set_size(int(self.font_size * scale * Pango.SCALE))
+            temp_layout.set_font_description(font_desc)
+            temp_layout.set_text(line, -1)
+            temp_layout.set_alignment(Pango.Alignment.CENTER)
+
+            _, logical_rect = temp_layout.get_extents()
+            line_widths.append(logical_rect.width / Pango.SCALE)
+            line_heights.append(logical_rect.height / Pango.SCALE)
+
+        current_y = text_y_widget
+
+        for i, (line_width, line_height) in enumerate(zip(line_widths, line_heights)):
+            bg_x_widget = text_x_widget + (overall_width - line_width) / 2 - self.PADDING_X_IMG * scale
+            bg_y_widget = current_y - self.PADDING_Y_IMG * scale
+            bg_width_widget = line_width + 2 * self.PADDING_X_IMG * scale
+            bg_height_widget = line_height + 2 * self.PADDING_Y_IMG * scale
+
+            radius = min(6.0 * scale, min(bg_width_widget, bg_height_widget) / 4)
+
+            round_top = True
+            round_bottom = True
+
+            if i > 0 and line_widths[i-1] >= line_width:
+                round_top = False
+            if i < len(lines) - 1 and line_widths[i+1] >= line_width:
+                round_bottom = False
+
+            self.draw_rounded_rectangle(cr, bg_x_widget, bg_y_widget, bg_width_widget, bg_height_widget, radius, round_top, round_bottom)
+            cr.fill()
+
+            current_y += line_height
 
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
         if not self.text.strip():
@@ -256,6 +325,7 @@ class TextAction(DrawingAction):
         font_desc.set_size(int(self.font_size * scale * Pango.SCALE))
         layout.set_font_description(font_desc)
         layout.set_text(self.text, -1)
+        layout.set_alignment(Pango.Alignment.CENTER)
 
         _, logical_rect = layout.get_extents()
         text_width_widget = logical_rect.width / Pango.SCALE
@@ -266,16 +336,7 @@ class TextAction(DrawingAction):
 
         if self.background_color and any(c > 0 for c in self.background_color):
             cr.set_source_rgba(*self.background_color)
-
-            bg_x_widget = text_x_widget - self.PADDING_X_IMG * scale
-            bg_y_widget = text_y_widget - self.PADDING_Y_IMG * scale
-            bg_width_widget = text_width_widget + 2 * self.PADDING_X_IMG * scale
-            bg_height_widget = text_height_widget + 2 * self.PADDING_Y_IMG * scale
-
-            radius = min(6.0 * scale, min(bg_width_widget, bg_height_widget) / 4)
-
-            self.draw_rounded_rectangle(cr, bg_x_widget, bg_y_widget, bg_width_widget, bg_height_widget, radius)
-            cr.fill()
+            self.draw_per_line_background(cr, layout, text_x_widget, text_y_widget, scale)
 
         cr.move_to(text_x_widget, text_y_widget)
         if self.contains_emoji():
@@ -285,7 +346,9 @@ class TextAction(DrawingAction):
             PangoCairo.layout_path(cr, layout)
             if self.outline_color and any(c > 0 for c in self.outline_color):
                 cr.set_source_rgba(*self.outline_color)
-                cr.set_line_width(4.0 * scale)
+                base_line_width = 2.0
+                adjusted_line_width = base_line_width * scale * (self.font_size / 14.0)
+                cr.set_line_width(adjusted_line_width)
                 cr.stroke_preserve()
             cr.set_source_rgba(*self.color)
             cr.fill()
@@ -303,6 +366,7 @@ class TextAction(DrawingAction):
         font_desc.set_size(int(self.font_size * Pango.SCALE))
         layout.set_font_description(font_desc)
         layout.set_text(self.text, -1)
+        layout.set_alignment(Pango.Alignment.CENTER)
 
         _, logical_rect = layout.get_extents()
         text_width_img = int(logical_rect.width / Pango.SCALE)

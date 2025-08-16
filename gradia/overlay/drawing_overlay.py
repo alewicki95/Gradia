@@ -372,47 +372,45 @@ class DrawingOverlay(Gtk.DrawingArea):
 
     def _on_text_entry_popover_closed(self, popover):
         if self.text_entry_popup and self.text_position:
-            vbox = self.text_entry_popup.get_child()
-            if vbox:
-                entry = vbox.get_first_child()
-                if entry and isinstance(entry, Gtk.Entry):
-                    text = entry.get_text().strip()
+            text = self.text_entry_popup.get_text().strip()
 
-                    if self.editing_text_action:
-                        if text:
-                            self.editing_text_action.text = text
-                            if hasattr(self.text_entry_popup, 'font_size_spin'):
-                                self.editing_text_action.font_size = self.text_entry_popup.font_size_spin.get_value()
-                        else:
-                            if self.editing_text_action in self.actions:
-                                self.actions.remove(self.editing_text_action)
-                            if self.selected_action == self.editing_text_action:
-                                self.selected_action = None
-                        self.redo_stack.clear()
-                    else:
-                        if text:
-                            current_settings = self.options.copy()
-                            if hasattr(self.text_entry_popup, 'font_size_spin'):
-                                current_settings.font_size = self.text_entry_popup.font_size_spin.get_value()
+            if self.editing_text_action:
+                if text:
+                    self.editing_text_action.text = text
+                    if hasattr(self.text_entry_popup, 'spin'):
+                        self.editing_text_action.font_size = self.text_entry_popup.spin.get_value()
+                else:
+                    if self.editing_text_action in self.actions:
+                        self.actions.remove(self.editing_text_action)
+                    if self.selected_action == self.editing_text_action:
+                        self.selected_action = None
+                self.redo_stack.clear()
+            else:
+                if text:
+                    current_settings = self.options.copy()
+                    if hasattr(self.text_entry_popup, 'spin'):
+                        current_settings.font_size = self.text_entry_popup.spin.get_value()
 
-                            action = TextAction(
-                                self.text_position,
-                                text,
-                                self._get_modified_image_bounds(),
-                                current_settings,
-                                self.font_size
-                            )
-                            self.actions.append(action)
-                            self.redo_stack.clear()
+                    action = TextAction(
+                        self.text_position,
+                        text,
+                        self._get_modified_image_bounds(),
+                        current_settings,
+                        self.font_size
+                    )
+                    self.actions.append(action)
+                    self.redo_stack.clear()
 
         self._cleanup_text_entry()
         self.queue_draw()
 
-
     def _on_text_entry_changed(self, entry):
-        self.live_text = entry.get_text()
+        if not self.text_entry_popup:
+            return
+        self.live_text = self.text_entry_popup.get_text().strip()
         if self.editing_text_action:
             self.editing_text_action.text = self.live_text
+
         self.queue_draw()
 
     def _on_text_entry_activate(self, entry):
