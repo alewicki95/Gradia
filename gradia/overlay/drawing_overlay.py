@@ -372,47 +372,45 @@ class DrawingOverlay(Gtk.DrawingArea):
 
     def _on_text_entry_popover_closed(self, popover):
         if self.text_entry_popup and self.text_position:
-            vbox = self.text_entry_popup.get_child()
-            if vbox:
-                entry = vbox.get_first_child()
-                if entry and isinstance(entry, Gtk.Entry):
-                    text = entry.get_text().strip()
+            text = self.text_entry_popup.get_text().strip()
 
-                    if self.editing_text_action:
-                        if text:
-                            self.editing_text_action.text = text
-                            if hasattr(self.text_entry_popup, 'font_size_spin'):
-                                self.editing_text_action.font_size = self.text_entry_popup.font_size_spin.get_value()
-                        else:
-                            if self.editing_text_action in self.actions:
-                                self.actions.remove(self.editing_text_action)
-                            if self.selected_action == self.editing_text_action:
-                                self.selected_action = None
-                        self.redo_stack.clear()
-                    else:
-                        if text:
-                            current_settings = self.options.copy()
-                            if hasattr(self.text_entry_popup, 'font_size_spin'):
-                                current_settings.font_size = self.text_entry_popup.font_size_spin.get_value()
+            if self.editing_text_action:
+                if text:
+                    self.editing_text_action.text = text
+                    if hasattr(self.text_entry_popup, 'spin'):
+                        self.editing_text_action.font_size = self.text_entry_popup.spin.get_value()
+                else:
+                    if self.editing_text_action in self.actions:
+                        self.actions.remove(self.editing_text_action)
+                    if self.selected_action == self.editing_text_action:
+                        self.selected_action = None
+                self.redo_stack.clear()
+            else:
+                if text:
+                    current_settings = self.options.copy()
+                    if hasattr(self.text_entry_popup, 'spin'):
+                        current_settings.font_size = self.text_entry_popup.spin.get_value()
 
-                            action = TextAction(
-                                self.text_position,
-                                text,
-                                self._get_modified_image_bounds(),
-                                current_settings,
-                                self.font_size
-                            )
-                            self.actions.append(action)
-                            self.redo_stack.clear()
+                    action = TextAction(
+                        self.text_position,
+                        text,
+                        self._get_modified_image_bounds(),
+                        current_settings,
+                        self.font_size
+                    )
+                    self.actions.append(action)
+                    self.redo_stack.clear()
 
         self._cleanup_text_entry()
         self.queue_draw()
 
-
     def _on_text_entry_changed(self, entry):
-        self.live_text = entry.get_text()
+        if not self.text_entry_popup:
+            return
+        self.live_text = self.text_entry_popup.get_text().strip()
         if self.editing_text_action:
             self.editing_text_action.text = self.live_text
+
         self.queue_draw()
 
     def _on_text_entry_activate(self, entry):
@@ -590,14 +588,7 @@ class DrawingOverlay(Gtk.DrawingArea):
                 elif self.options.mode == DrawingMode.CIRCLE:
                     CircleAction(self.start_point, self.end_point, self.current_shift_pressed, self.options.copy()).draw(cr, self._image_to_widget_coords, scale)
                 elif self.options.mode == DrawingMode.CENSOR:
-                    cr.set_source_rgba(0.5, 0.5, 0.5, 0.5)
-                    x1_widget, y1_widget = self._image_to_widget_coords(*self.start_point)
-                    x2_widget, y2_widget = self._image_to_widget_coords(*self.end_point)
-                    x, y = min(x1_widget, x2_widget), min(y1_widget, y2_widget)
-                    w, h = abs(x2_widget - x1_widget), abs(y2_widget - y1_widget)
-                    cr.rectangle(x, y, w, h)
-                    cr.fill()
-
+                    CensorAction(self.start_point, self.end_point, self._get_background_pixbuf(),self.options.copy()).draw(cr, self._image_to_widget_coords, scale)
         if self.is_text_editing and self.text_position and self.live_text:
             if self.editing_text_action:
                 preview = TextAction(
