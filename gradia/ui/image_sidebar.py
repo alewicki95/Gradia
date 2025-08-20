@@ -254,7 +254,7 @@ class ImageSidebar(Adw.Bin):
             background=self._current_background
         )
 
-    def _get_default_options(self) -> ImageOptions:
+    def _get_disabled_options(self) -> ImageOptions:
         return ImageOptions(
             padding=0,
             corner_radius=0,
@@ -277,7 +277,7 @@ class ImageSidebar(Adw.Bin):
 
     def _notify_image_options_changed(self) -> None:
         if self._background_mode == "none":
-            options = self._get_default_options()
+            options = self._get_disabled_options()
         else:
             options = self._get_current_options()
 
@@ -297,7 +297,7 @@ class ImageSidebar(Adw.Bin):
         self._set_selective_sensitivity(is_disabled)
 
         if is_disabled:
-            options = self._get_default_options()
+            options = self._get_disabled_options()
         else:
             options = self._get_current_options()
 
