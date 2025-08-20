@@ -74,7 +74,11 @@
     </key>
     <key name="exit-method" type="s">
       <default>'confirm'</default>
-      <summary>Method of how the app exists..</summary>
+      <summary>Method of how the app exists.</summary>
+    </key>
+    <key name="overwrite-screenshot" type="b">
+      <default>false</default>
+      <summary>Overwrite currently opened screenshot on close</summary>
     </key>
     <key name="custom-export-command" type="s">
       <default>''</default>

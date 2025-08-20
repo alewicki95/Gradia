@@ -73,6 +73,13 @@ template $GradiaPreferencesWindow : Adw.PreferencesDialog {
           }
       }
 
+      Adw.SwitchRow overwrite_screenshot_switch {
+        title: _("Overwrite last screenshot on close");
+        subtitle: _("Replace it with the annotated version");
+        tooltip-text: _("Replace last screenshot file with annotated version on close");
+        activatable: true;
+      }
+
       Adw.SwitchRow delete_screenshot_switch {
         title: _("Trash Screenshots on Close");
         subtitle: _("Automatically move screenshots taken from within the app to trash");

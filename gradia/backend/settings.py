@@ -100,6 +100,10 @@ class Settings:
         self._settings.set_string("exit-method", value)
 
     @property
+    def overwrite_screenshot(self) -> bool:
+        return self._settings.get_boolean("overwrite-screenshot")
+
+    @property
     def custom_export_command(self) -> str:
         return self._settings.get_string("custom-export-command")
 

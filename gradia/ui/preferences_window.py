@@ -68,6 +68,7 @@ class PreferencesWindow(Adw.PreferencesDialog):
     folder_label: Gtk.Label = Gtk.Template.Child()
     save_format_group: Adw.PreferencesGroup = Gtk.Template.Child()
     delete_screenshot_switch: Adw.SwitchRow = Gtk.Template.Child()
+    overwrite_screenshot_switch: Adw.SwitchRow = Gtk.Template.Child()
     confirm_upload_switch: Adw.SwitchRow = Gtk.Template.Child()
     save_format_combo: Adw.ComboRow = Gtk.Template.Child()
     provider_name: Gtk.Label = Gtk.Template.Child()
@@ -216,6 +217,7 @@ class PreferencesWindow(Adw.PreferencesDialog):
         self.settings.bind_switch(self.delete_screenshot_switch,"trash-screenshots-on-close")
         self.settings.bind_switch(self.confirm_upload_switch,"show-export-confirm-dialog")
         self.settings.bind_toggle_group(self.exiting_toggle_group,"exit-method")
+        self.settings.bind_switch(self.overwrite_screenshot_switch,"overwrite-screenshot")
 
     @Gtk.Template.Callback()
     def on_choose_provider_clicked(self, button: Gtk.Button) -> None:
