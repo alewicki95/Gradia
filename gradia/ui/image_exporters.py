@@ -17,6 +17,7 @@
 
 import os
 import subprocess
+import threading
 
 from gi.repository import Gtk, Gio, GdkPixbuf, GLib, Gdk
 from gradia.clipboard import copy_file_to_clipboard, copy_text_to_clipboard, save_pixbuff_to_path
@@ -30,14 +31,13 @@ logger = Logger()
 
 class SystemNotifier:
     @staticmethod
-    def send_notification(title: str, body: str = "", icon: str = "edit-copy-symbolic"):
+    def send_notification(title: str, body: str = "", icon: str = "edit-copy-symbolic", folder_path: str = None):
         app = Gio.Application.get_default()
         notification = Gio.Notification.new(title)
         notification.set_icon(Gio.ThemedIcon(name=icon))
         if body:
             notification.set_body(body)
         app.send_notification(None, notification)
-
 
 class BaseImageExporter:
     """Base class for image export handlers"""
@@ -366,10 +366,11 @@ class CloseHandlerExporter(BaseImageExporter):
         try:
             self._ensure_processed_image_available()
             pixbuf = self.get_processed_pixbuf()
-            results = {'saved': False, 'copied': False}
+            results = {'saved': False, 'copied': False, 'save_folder': None}
 
             if save and self.window.image.is_screenshot:
                 save_path = self.window.image.screenshot_path
+                results['save_folder'] = self.window.image.get_folder_path()
                 print(save_path)
                 if save_path:
                     format_type = self.file_exporter._get_format_from_extension(save_path)
@@ -425,6 +426,8 @@ class CloseHandlerExporter(BaseImageExporter):
     def _finish_close_operation(self, results: dict, callback: callable):
         saved, copied = results['saved'], results['copied']
 
+        save_folder = results.get('save_folder')
+
         if saved and copied:
             message = _("Screenshot updated and copied to clipboard")
         elif saved:
@@ -434,7 +437,7 @@ class CloseHandlerExporter(BaseImageExporter):
         else:
             message = None
         if message:
-            SystemNotifier.send_notification(_("Close Operation Successful"), message)
+            SystemNotifier.send_notification(_("Close Operation Successful"), message, folder_path=save_folder)
             self.window.show_close_confirmation = False
 
         if callback:
