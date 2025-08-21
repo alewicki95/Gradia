@@ -58,7 +58,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     toast_overlay: Adw.ToastOverlay = Gtk.Template.Child()
     toolbar_view: Adw.ToolbarView = Gtk.Template.Child()
 
-    welcome_content: WelcomePage = Gtk.Template.Child()
+    welcome_page: Gtk.StackPage = Gtk.Template.Child()
 
     main_stack: Gtk.Stack = Gtk.Template.Child()
     split_view: Gtk.Box = Gtk.Template.Child()
@@ -99,10 +99,16 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
         self.connect("close-request", self._on_close_request)
 
+        self.welcome_content = None
+
         if self.file_path:
             self.import_manager.load_from_file(self.file_path)
+
         if self.start_screenshot:
             self.import_manager.load_as_screenshot(self.start_screenshot)
+        else:
+            self.welcome_content = WelcomePage()
+            self.welcome_page.set_child(self.welcome_content)
 
     def _setup_actions(self) -> None:
         self.create_action("shortcuts", self._on_shortcuts_activated)
@@ -352,7 +358,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
     def _show_loading_state(self) -> None:
         self.main_stack.set_visible_child_name("main")
-        self.welcome_content.recent_picker.set_visible(False)
+        if self.welcome_content:
+            self.welcome_content.recent_picker.set_visible(False)
         self.image_stack.set_visible_child_name(self.PAGE_LOADING)
 
     def _hide_loading_state(self) -> None:
