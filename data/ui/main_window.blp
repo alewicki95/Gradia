@@ -14,10 +14,9 @@ template $GradiaMainWindow : Adw.ApplicationWindow {
         transition-type: crossfade;
         transition-duration: 200;
 
-        Gtk.StackPage welcome_page {
+        Adw.Bin welcome_page {
           name: "welcome";
-
-          child: $GradiaWelcomePage welcome_content {};
+          child: Box welcome_content_placeholder {};
         }
 
         Gtk.StackPage main_page {
@@ -25,8 +24,6 @@ template $GradiaMainWindow : Adw.ApplicationWindow {
 
           child: Adw.OverlaySplitView split_view {};
         }
-
-        visible-child-name: "welcome";
       };
     }
   };

@@ -58,7 +58,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     toast_overlay: Adw.ToastOverlay = Gtk.Template.Child()
     toolbar_view: Adw.ToolbarView = Gtk.Template.Child()
 
-    welcome_content: WelcomePage = Gtk.Template.Child()
+    welcome_page: Gtk.StackPage = Gtk.Template.Child()
 
     main_stack: Gtk.Stack = Gtk.Template.Child()
     split_view: Gtk.Box = Gtk.Template.Child()
@@ -72,6 +72,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
+        self.settings = Settings()
+
         self._setup_accelerator_handling()
         self.app: Adw.Application = kwargs['application']
         self.temp_dir: str = temp_dir
@@ -97,10 +99,16 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
         self.connect("close-request", self._on_close_request)
 
+        self.welcome_content = None
+
         if self.file_path:
             self.import_manager.load_from_file(self.file_path)
+
         if self.start_screenshot:
             self.import_manager.load_as_screenshot(self.start_screenshot)
+        else:
+            self.welcome_content = WelcomePage()
+            self.welcome_page.set_child(self.welcome_content)
 
     def _setup_actions(self) -> None:
         self.create_action("shortcuts", self._on_shortcuts_activated)
@@ -188,18 +196,44 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     Shutdown
     """
     def _on_close_request(self, window) -> bool:
-        if Settings().show_close_confirm_dialog and self.show_close_confirmation:
+        exit_method = self.settings.exit_method
+
+        if exit_method == "confirm" and self.show_close_confirmation:
             confirm_dialog = ConfirmCloseDialog(self)
-            confirm_dialog.show_dialog(self._on_confirm_close_ok)
+            confirm_dialog.show_dialog(self._on_confirm_close_ok, self._on_confirm_close_copy)
             return True
-        else:
+        elif exit_method == "copy":
+            self._on_confirm_close_copy()
+            return True
+        else:  # "none"
             self._on_confirm_close_ok()
             return True
 
-    def _on_confirm_close_ok(self) -> None:
-        if Settings().delete_screenshots_on_close:
+    def _finalize_close(self, copy: bool) -> None:
+        if self.settings.delete_screenshots_on_close:
             self.import_manager.delete_screenshots()
+
+        if not copy:
+            self.hide()
+
+        save = not self.settings.delete_screenshots_on_close and self.settings.overwrite_screenshot
+        if self.image_ready:
+            self.export_manager.close_handler(
+                copy=copy,
+                save=save,
+                callback=self._on_close_finished
+            )
+        else:
+            self._on_close_finished()
+
+    def _on_close_finished(self) -> None:
         self.destroy()
+
+    def _on_confirm_close_ok(self) -> None:
+        self._finalize_close(copy=False)
+
+    def _on_confirm_close_copy(self) -> None:
+        self._finalize_close(copy=True)
 
     """
     Callbacks
@@ -324,7 +358,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
     def _show_loading_state(self) -> None:
         self.main_stack.set_visible_child_name("main")
-        self.welcome_content.recent_picker.set_visible(False)
+        if self.welcome_content:
+            self.welcome_content.recent_picker.set_visible(False)
         self.image_stack.set_visible_child_name(self.PAGE_LOADING)
 
     def _hide_loading_state(self) -> None:
@@ -406,7 +441,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         action = self.lookup_action('command')
         if action:
             action.set_enabled(self.image_ready)
-            self.share_button.set_visible(bool(Settings().custom_export_command.strip()))
+            self.share_button.set_visible(bool(self.settings.custom_export_command.strip()))
 
     def _create_delete_screenshots_dialog(self) -> None:
         dialog = DeleteScreenshotsDialog(self)
@@ -421,7 +456,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         preferences_window.present(self)
 
     def set_screenshot_subfolder(self, subfolder) -> None:
-        Settings().screenshot_subfolder = subfolder
+        self.settings.screenshot_subfolder = subfolder
         self.welcome_content.refresh_recent_picker()
 
     def _on_crop_toggled(self, image_stack: ImageStack, enabled: bool) -> None:
@@ -429,8 +464,8 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
 
     def _run_custom_command(self) -> None:
-        if Settings().show_export_confirm_dialog:
-            provider_name = Settings().provider_name
+        if self.settings.show_export_confirm_dialog:
+            provider_name = self.settings.provider_name
 
             dialog = Adw.AlertDialog.new(
                 heading=_("Confirm Upload"),
