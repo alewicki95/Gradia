@@ -47,6 +47,7 @@
                   <li>Redesigned the Annotation section in the sidebar.</li>
                   <li>Added options to automatically copy or overwrite screenshot files on quit.</li>
                   <li>Improved the design of the provider picker screens.</li>
+                  <li>Added constrained drawing via shift for tools like square and arrow..</li>
               </ul>
           </description>
       </release>

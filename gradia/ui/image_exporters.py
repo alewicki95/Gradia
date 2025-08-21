@@ -31,13 +31,20 @@ logger = Logger()
 
 class SystemNotifier:
     @staticmethod
-    def send_notification(title: str, body: str = "", icon: str = "edit-copy-symbolic", folder_path: str = None):
+    def send_notification(
+        title: str,
+        body: str = "",
+        icon: str = "edit-copy-symbolic",
+        folder_path: str = None
+    ):
         app = Gio.Application.get_default()
         notification = Gio.Notification.new(title)
         notification.set_icon(Gio.ThemedIcon(name=icon))
         if body:
             notification.set_body(body)
-        app.send_notification(None, notification)
+
+        notification_id = "screenshot-notification"
+        app.send_notification(notification_id, notification)
 
 class BaseImageExporter:
     """Base class for image export handlers"""
@@ -171,9 +178,9 @@ class FileDialogExporter(BaseImageExporter):
                 try:
                     self._save_image(save_path, format_type)
                     self.window.show_close_confirmation = False
-                    self.window._show_notification(_("Export Failed"))
-                except Exception as e:
                     self.window._show_notification(_("Image saved successfully"))
+                except Exception as e:
+                    self.window._show_notification(_("Export Failed"))
                     logger.error(f"Failed to save image: {e}")
 
         dialog.destroy()
@@ -428,16 +435,12 @@ class CloseHandlerExporter(BaseImageExporter):
 
         save_folder = results.get('save_folder')
 
-        if saved and copied:
-            message = _("Screenshot updated and copied to clipboard")
-        elif saved:
-            message = _("Screenshot updated")
-        elif copied:
-            message = _("Image copied to clipboard")
-        else:
-            message = None
-        if message:
-            SystemNotifier.send_notification(_("Close Operation Successful"), message, folder_path=save_folder)
+        if copied:
+            title = _("Image Copied")
+            body = _("You can now paste it from the clipboard.")
+            icon = "edit-copy-symbolic"
+
+            SystemNotifier.send_notification(title, body, icon, folder_path=save_folder)
             self.window.show_close_confirmation = False
 
         if callback:
