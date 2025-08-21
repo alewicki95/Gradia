@@ -37,6 +37,19 @@
 		<color type="primary" scheme_preference="dark">#073c6f</color>
 	</branding>
 	<releases>
+      <release version="1.10.0" date="2025-08-21">
+          <description translate="no">
+              <p>This feature release includes:</p>
+              <ul>
+                  <li>Added keyboard shortcuts for annotation options.</li>
+                  <li>Reworked the Censor tool.</li>
+                  <li>Reworked the Text tool to support multi-line annotations.</li>
+                  <li>Redesigned the Annotation section in the sidebar.</li>
+                  <li>Added options to automatically copy or overwrite screenshot files on quit.</li>
+                  <li>Improved the design of the provider picker screens.</li>
+              </ul>
+          </description>
+      </release>
       <release version="1.9.0" date="2025-08-04">
       <description translate="no">
           <p>This feature release includes:</p>
