@@ -18,9 +18,10 @@
 import os
 import subprocess
 import threading
+import time
 
 from gi.repository import Gtk, Gio, GdkPixbuf, GLib, Gdk
-from gradia.clipboard import copy_file_to_clipboard, copy_text_to_clipboard, save_pixbuff_to_path
+from gradia.clipboard import copy_text_to_clipboard, save_pixbuff_to_path, copy_pixbuf_to_clipboard
 from gradia.backend.logger import Logger
 from gradia.app_constants import SUPPORTED_EXPORT_FORMATS, DEFAULT_EXPORT_FORMAT
 from gradia.backend.settings import Settings
@@ -31,13 +32,20 @@ logger = Logger()
 
 class SystemNotifier:
     @staticmethod
-    def send_notification(title: str, body: str = "", icon: str = "edit-copy-symbolic", folder_path: str = None):
+    def send_notification(
+        title: str,
+        body: str = "",
+        icon: str = "edit-copy-symbolic",
+        folder_path: str = None
+    ):
         app = Gio.Application.get_default()
         notification = Gio.Notification.new(title)
         notification.set_icon(Gio.ThemedIcon(name=icon))
         if body:
             notification.set_body(body)
-        app.send_notification(None, notification)
+
+        notification_id = "screenshot-notification"
+        app.send_notification(notification_id, notification)
 
 class BaseImageExporter:
     """Base class for image export handlers"""
@@ -171,9 +179,9 @@ class FileDialogExporter(BaseImageExporter):
                 try:
                     self._save_image(save_path, format_type)
                     self.window.show_close_confirmation = False
-                    self.window._show_notification(_("Export Failed"))
-                except Exception as e:
                     self.window._show_notification(_("Image saved successfully"))
+                except Exception as e:
+                    self.window._show_notification(_("Export Failed"))
                     logger.error(f"Failed to save image: {e}")
 
         dialog.destroy()
@@ -245,20 +253,18 @@ class ClipboardExporter(BaseImageExporter):
 
             def _task_thread_func(task, source_object, task_data, cancellable):
                 try:
-                    temp_path = save_pixbuff_to_path(self.temp_dir, self.get_processed_pixbuf())
-                    task.return_value(temp_path)
+                    pixbuf = self.get_processed_pixbuf()
+                    task.return_value(pixbuf)
                 except Exception as e:
                     task.return_error(GLib.Error.new_literal(Gio.io_error_quark(), str(e), 0))
 
             def _on_task_complete(source_object, result, user_data):
                 try:
-                    temp_path = result.propagate_value().value
+                    pixbuf = result.propagate_value().value
+                    if not isinstance(pixbuf, GdkPixbuf.Pixbuf):
+                        raise Exception("Invalid result: expected GdkPixbuf.Pixbuf")
 
-                    if not temp_path or not os.path.exists(temp_path):
-                        raise Exception("Failed to create temporary file for clipboard")
-
-                    copy_file_to_clipboard(temp_path)
-
+                    copy_pixbuf_to_clipboard(pixbuf)
                     if not silent:
                         self.window.show_close_confirmation = False
                         self.window._show_notification(_("Image copied to clipboard"))
@@ -358,7 +364,8 @@ class CloseHandlerExporter(BaseImageExporter):
         self.file_exporter = FileDialogExporter(window, temp_dir)
 
     def handle_close(self, copy: bool, save: bool, callback: callable = None):
-        if not copy and not save:
+        if not copy and (not save or not self.window.image.is_screenshot()):
+            print("returning")
             if callback:
                 callback()
             return
@@ -392,28 +399,14 @@ class CloseHandlerExporter(BaseImageExporter):
     def _handle_clipboard_copy(self, pixbuf: GdkPixbuf.Pixbuf, results: dict, callback: callable):
         def _do_clipboard_copy():
             try:
-                temp_path = save_pixbuff_to_path(self.temp_dir, pixbuf)
-                if temp_path and os.path.exists(temp_path):
-                    with open(temp_path, "rb") as f:
-                        png_data = f.read()
+                if copy_pixbuf_to_clipboard(pixbuf):
+                    results['copied'] = True
 
-                    display = Gdk.Display.get_default()
-                    if display:
-                        bytes_data = GLib.Bytes.new(png_data)
-                        clipboard = display.get_clipboard()
-                        content_provider = Gdk.ContentProvider.new_for_bytes("image/png", bytes_data)
-                        clipboard.set_content(content_provider)
-                        results['copied'] = True
-
-                        def _delayed_finish():
-                            self._finish_close_operation(results, callback)
-                            return False
-
-                        GLib.timeout_add(50, _delayed_finish)
-                    else:
-                        self._finish_close_operation(results, callback)
-                else:
+                def _delayed_finish():
                     self._finish_close_operation(results, callback)
+                    return False
+
+                GLib.timeout_add(50, _delayed_finish)
 
             except Exception as e:
                 logger.error(f"Error copying to clipboard in close handler: {e}")
@@ -425,19 +418,14 @@ class CloseHandlerExporter(BaseImageExporter):
 
     def _finish_close_operation(self, results: dict, callback: callable):
         saved, copied = results['saved'], results['copied']
-
         save_folder = results.get('save_folder')
 
-        if saved and copied:
-            message = _("Screenshot updated and copied to clipboard")
-        elif saved:
-            message = _("Screenshot updated")
-        elif copied:
-            message = _("Image copied to clipboard")
-        else:
-            message = None
-        if message:
-            SystemNotifier.send_notification(_("Close Operation Successful"), message, folder_path=save_folder)
+        if copied:
+            title = _("Image Copied")
+            body = _("You can now paste it from the clipboard.")
+            icon = "edit-copy-symbolic"
+
+            SystemNotifier.send_notification(title, body, icon, folder_path=save_folder)
             self.window.show_close_confirmation = False
 
         if callback:
