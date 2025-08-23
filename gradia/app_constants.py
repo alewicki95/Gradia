@@ -36,7 +36,7 @@ PREDEFINED_GRADIENTS: list[Gradient] = [
     ),
     Gradient(
         mode="linear",
-        steps=[(0.0, "#DFFFCD"), (0.48, "#90F9C4"), (1.0, "#39F3BB")],
+        steps=[(0.0, "#DFFFCD"), (0.5, "#90F9C4"), (1.0, "#39F3BB")],
         angle=135
     ),
     Gradient(

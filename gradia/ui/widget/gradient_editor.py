@@ -18,6 +18,7 @@
 from gi.repository import Adw, Gtk, GObject, Gdk, Gsk, Graphene, GLib
 from gradia.ui.widget.angle_selector import AngleSelector
 from gradia.constants import rootdir
+from gradia.utils.colors import is_light_color_rgba
 from typing import Optional, Callable, List, Tuple
 import operator
 import time
@@ -111,7 +112,7 @@ class GradientColorButton(Gtk.Box):
         """
         self._css_provider.load_from_string(css)
 
-        if (rgba.red * 0.299 + rgba.green * 0.587 + rgba.blue * 0.114) > 0.8:
+        if is_light_color_rgba(rgba):
             self._icon.get_style_context().add_class("dark")
         else:
             self._icon.get_style_context().remove_class("dark")
