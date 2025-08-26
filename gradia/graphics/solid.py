@@ -22,7 +22,7 @@ from PIL import Image
 from gi.repository import Adw, Gtk, Gio, Gdk
 
 from gradia.graphics.background import Background
-from gradia.utils.colors import hex_to_rgb, hex_to_rgba, rgba_to_hex, is_light_color
+from gradia.utils.colors import hex_to_rgb, hex_to_rgba, rgba_to_hex, is_light_color_hex
 from gradia.constants import rootdir  # pyright: ignore
 
 
@@ -95,7 +95,7 @@ class ColorPresetButton(Gtk.Button):
         self.checkmark.set_pixel_size(16)
         self.checkmark.add_css_class("checkmark-icon")
 
-        if is_light_color(self.color):
+        if is_light_color_hex(self.color):
             self.checkmark.add_css_class("dark")
         else:
              self.checkmark.remove_css_class("dark")

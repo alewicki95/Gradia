@@ -1,9 +1,10 @@
-@import "base-tailwind.css";
+@import "base.css";
 
 :root {
   --btn-bg: rgba(255, 255, 255, .12);
   --btnround: 500px;
 }
+
 
 .bg-drool {
     background-image: url("../images/drool-l.svg");
@@ -48,15 +49,15 @@
 .btn.suggested {
   font-weight: 700;
   font-variation-settings: "wght" 700;
-  background-color: var(--accent-color, AccentColor);
-  color: var(--accent-text-color, light-dark(white, var(--light1)));
-  box-shadow: 0 0 0 0 var(--accent-color, AccentColor);
+  background-color: var(--accent-color);
+  color: white;
+  box-shadow: 0 0 0 0 var(--accent-color);
   transition: box-shadow .2s var(--slickease);
 }
 
 .btn.suggested:hover {
-  background-color: var(--accent-hover-color, color-mix(in srgb, AccentColor 85%, black));
-  box-shadow: 0 0 0 2px var(--accent-hover-color, color-mix(in srgb, AccentColor 85%, black));
+  background-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-color);
 }
 
 .btn:hover {
