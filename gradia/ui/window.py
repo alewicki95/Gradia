@@ -406,7 +406,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         size_str: str = f"{width}×{height}"
         self.sidebar.processed_size_row.set_subtitle(size_str)
 
-
     def _show_notification(self, message: str,action_label: str | None = None,action_callback: Callable[[], None] | None = None) -> None:
         if self.toast_overlay:
             toast = Adw.Toast.new(message)
