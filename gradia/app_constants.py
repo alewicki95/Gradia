@@ -51,6 +51,15 @@ PREDEFINED_GRADIENTS: list[Gradient] = [
     ),
 ]
 
+PRESET_IMAGES = [
+    "/be/alexandervanhee/gradia/images/preset1.webp",
+    "/be/alexandervanhee/gradia/images/preset2.webp",
+    "/be/alexandervanhee/gradia/images/preset3.webp",
+    "/be/alexandervanhee/gradia/images/preset4.webp",
+    "/be/alexandervanhee/gradia/images/preset5.png",
+    "/be/alexandervanhee/gradia/images/preset6.webp",
+]
+
 SUPPORTED_EXPORT_FORMATS = {
     'png': {
         'name': _('PNG Image (*.png)'),

@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 from gi.repository import Adw, Gtk
-from gradia.ui.widget.gradient_preset_button import GradientPresetButton
+from gradia.ui.widget.preset_button import GradientPresetButton
 from gradia.ui.widget.angle_selector import AngleSelector
 from gradia.ui.widget.gradient_editor import GradientEditor
 from gradia.constants import rootdir
