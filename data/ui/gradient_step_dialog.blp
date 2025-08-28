@@ -1,0 +1,55 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $GradiaGradientStepDialog: Adw.Dialog {
+  can-close: true;
+  height-request:400;
+  title: _("Edit Gradient Steps");
+
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar header_bar {
+      show-end-title-buttons: true;
+    }
+
+    content: Gtk.ScrolledWindow {
+      hscrollbar-policy: never;
+      vscrollbar-policy: automatic;
+
+      child: Box main_box {
+        orientation: vertical;
+        spacing: 24;
+        margin-top: 24;
+        margin-bottom: 24;
+        margin-start: 24;
+        margin-end: 24;
+
+        Frame preview_frame {
+          width-request: 350;
+          height-request: 80;
+          styles ["card"]
+
+          Box preview_box {
+            width-request: 350;
+            height-request: 80;
+            styles ["gradient-preview"]
+          }
+        }
+
+        Adw.PreferencesGroup steps_group {
+          title: _("Gradient Steps");
+          description: _("You may have upto five steps");
+          [header-suffix]
+          Button add_step_button {
+            label: _("Add Step");
+            icon-name: "list-add-symbolic";
+            styles ["suggested-action"]
+            halign: start;
+            valign: center;
+          }
+        }
+
+      };
+    };
+  };
+}
