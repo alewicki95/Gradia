@@ -58,6 +58,7 @@ class ImageStack(Adw.Bin):
     zoom_in_button: Gtk.Button = Gtk.Template.Child()
     reset_zoom_button: Gtk.Button = Gtk.Template.Child()
     zoom_info_revealer: Gtk.Revealer = Gtk.Template.Child()
+    sidebar_revealer: Gtk.Revealer = Gtk.Template.Child()
     sidebar_button: Gtk.Button = Gtk.Template.Child()
 
     crop_enabled: bool = False
@@ -158,6 +159,7 @@ class ImageStack(Adw.Bin):
         self.right_controls_revealer.set_reveal_child(not self.crop_enabled)
         self.right_controls_revealer.set_sensitive(not self.crop_enabled)
         self.confirm_crop_revealer.set_reveal_child(self.crop_enabled)
+        self.sidebar_revealer.set_reveal_child(not self.crop_enabled)
         self.zoomable_widget.disable_zoom = self.crop_enabled
         self.sidebar_button.set_sensitive(not self.crop_enabled)
         if not self._compact_mode:

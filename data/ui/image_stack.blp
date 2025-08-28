@@ -16,15 +16,6 @@ template $GradiaImageStack : Adw.Bin {
       styles [
         "header-osd"
       ]
-
-        [start]
-        Gtk.Button sidebar_button {
-          icon-name: "sidebar-show-symbolic";
-          tooltip-text: _("Open Sidebar");
-          action-name: "win.sidebar-shown";
-          action-target: true;
-          visible: false;
-        }
     }
 
     content: Gtk.Stack stack {
@@ -71,6 +62,20 @@ template $GradiaImageStack : Adw.Bin {
                 styles [
                   "osd-box"
                 ]
+
+                Gtk.Revealer sidebar_revealer {
+                  transition-type: slide_right;
+                  transition-duration: 300;
+                  reveal-child:true;
+                    Gtk.Button sidebar_button {
+                      icon-name: "sidebar-show-symbolic";
+                      tooltip-text: _("Open Sidebar");
+                      action-name: "win.sidebar-shown";
+                      action-target: true;
+                      visible: false;
+                      styles ["flat"]
+                    }
+                }
 
                 Gtk.Button crop_button {
                   icon-name: "crop-symbolic";
