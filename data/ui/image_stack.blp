@@ -16,6 +16,15 @@ template $GradiaImageStack : Adw.Bin {
       styles [
         "header-osd"
       ]
+
+        [start]
+        Gtk.Button sidebar_button {
+          icon-name: "sidebar-show-symbolic";
+          tooltip-text: _("Open Sidebar");
+          action-name: "win.sidebar-shown";
+          action-target: true;
+          visible: false;
+        }
     }
 
     content: Gtk.Stack stack {
@@ -122,6 +131,7 @@ template $GradiaImageStack : Adw.Bin {
               overflow: visible;
 
               Gtk.Button {
+                margin-bottom:2;
                 label: _("Confirm");
                 tooltip-text: _("Confirm Crop Selection");
                 action-name: "win.crop";

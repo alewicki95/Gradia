@@ -170,7 +170,7 @@ class FileDialogExporter(BaseImageExporter):
                 format_type = self._get_format_from_extension(save_path)
 
                 if format_type not in SUPPORTED_EXPORT_FORMATS:
-                    self.window._show_notification(_("Unsupported image file extension."))
+                    self.window._show_notification(_("Unsupported image file extension"))
                     dialog.destroy()
                     return
 

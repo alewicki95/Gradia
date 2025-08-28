@@ -47,7 +47,7 @@ template $GradiaPreferencesWindow : Adw.PreferencesDialog {
 
       Adw.ActionRow {
           title: _("When Exiting");
-          subtitle: _("Hover over an option for details.");
+          subtitle: _("Hover over an option for details");
 
           [suffix]
           Adw.ToggleGroup exiting_toggle_group {
@@ -91,14 +91,6 @@ template $GradiaPreferencesWindow : Adw.PreferencesDialog {
     Adw.PreferencesGroup {
       title: _("Image Upload Providers");
       description: _("Connect to your favorite upload providers, or create a link yourself");
-
-      [header-suffix]
-      Gtk.LinkButton more_info_link {
-        label: _("Learn More…");
-        uri: "https://gradia.alexandervanhee.be/providers";
-        tooltip-text: _("Learn more about providers");
-        valign: center;
-      }
 
       Adw.ActionRow provider_row {
         title: _("Provider");

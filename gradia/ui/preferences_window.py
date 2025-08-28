@@ -230,47 +230,49 @@ class PreferencesWindow(Adw.PreferencesDialog):
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/preferences/screenshot_guide_page.ui")
 class ScreenshotGuidePage(Adw.NavigationPage):
-   __gtype_name__ = 'GradiaScreenshotGuidePage'
-   interactive_entry: Gtk.Entry = Gtk.Template.Child()
-   interactive_copy_btn: Gtk.Button = Gtk.Template.Child()
-   fullscreen_entry: Gtk.Entry = Gtk.Template.Child()
-   fullscreen_copy_btn: Gtk.Button = Gtk.Template.Child()
+    __gtype_name__ = 'GradiaScreenshotGuidePage'
 
-   def __init__(self, preferences_dialog, **kwargs):
-       super().__init__(**kwargs)
-       self.preferences_dialog = preferences_dialog
-       self._connect_signals()
-       self._setup_command_entries()
+    interactive_entry: Gtk.Entry = Gtk.Template.Child()
+    fullscreen_entry: Gtk.Entry = Gtk.Template.Child()
 
-   def _is_running_in_flatpak(self) -> bool:
-       if os.getenv('FLATPAK_ID'):
-           return True
-       if Path('/.flatpak-info').exists():
-           return True
-       if '/app/' in str(Path(__file__).resolve()):
-           return True
-       return False
+    def __init__(self, preferences_dialog, **kwargs):
+        super().__init__(**kwargs)
+        self.preferences_dialog = preferences_dialog
+        self._connect_signals()
+        self._setup_command_entries()
 
-   def _get_command_for_screenshot_type(self, screenshot_type: str) -> str:
-       if self._is_running_in_flatpak():
-           return f"flatpak run be.alexandervanhee.gradia --screenshot={screenshot_type}"
-       else:
-           return f"gradia --screenshot={screenshot_type}"
+    def _is_running_in_flatpak(self) -> bool:
+        if os.getenv('FLATPAK_ID'):
+            return True
+        if Path('/.flatpak-info').exists():
+            return True
+        if '/app/' in str(Path(__file__).resolve()):
+            return True
+        return False
 
-   def _connect_signals(self):
-       self.interactive_copy_btn.connect("clicked",
-           lambda btn: self._copy_to_clipboard(self.interactive_entry.get_text()))
-       self.fullscreen_copy_btn.connect("clicked",
-           lambda btn: self._copy_to_clipboard(self.fullscreen_entry.get_text()))
+    def _get_command_for_screenshot_type(self, screenshot_type: str) -> str:
+        if self._is_running_in_flatpak():
+            return f"flatpak run be.alexandervanhee.gradia --screenshot={screenshot_type}"
+        else:
+            return f"gradia --screenshot={screenshot_type}"
 
-   def _copy_to_clipboard(self, text: str) -> None:
-       clipboard = self.get_clipboard()
-       clipboard.set(text)
-       toast = Adw.Toast.new(_("Copied!"))
-       self.preferences_dialog.add_toast(toast)
+    def _connect_signals(self):
+        self.interactive_entry.connect("icon-press", self._on_entry_icon_press)
+        self.fullscreen_entry.connect("icon-press", self._on_entry_icon_press)
 
-   def _setup_command_entries(self):
-       interactive_command = self._get_command_for_screenshot_type("INTERACTIVE")
-       fullscreen_command = self._get_command_for_screenshot_type("FULL")
-       self.interactive_entry.set_text(interactive_command)
-       self.fullscreen_entry.set_text(fullscreen_command)
+    def _on_entry_icon_press(self, entry: Gtk.Entry, icon_pos: Gtk.EntryIconPosition) -> None:
+        if icon_pos == Gtk.EntryIconPosition.SECONDARY:
+            self._copy_to_clipboard(entry.get_text())
+
+    def _copy_to_clipboard(self, text: str) -> None:
+        clipboard = self.get_clipboard()
+        clipboard.set(text)
+        toast = Adw.Toast(title=_("Copied!"), timeout=1.5)
+        self.preferences_dialog.add_toast(toast)
+
+    def _setup_command_entries(self):
+        interactive_command = self._get_command_for_screenshot_type("INTERACTIVE")
+        fullscreen_command = self._get_command_for_screenshot_type("FULL")
+
+        self.interactive_entry.set_text(interactive_command)
+        self.fullscreen_entry.set_text(fullscreen_command)
