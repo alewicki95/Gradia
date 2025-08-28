@@ -3,7 +3,7 @@ using Adw 1;
 
 template $GradiaGradientStepDialog: Adw.Dialog {
   can-close: true;
-  height-request:400;
+  height-request:420;
   title: _("Edit Gradient Steps");
 
   child: Adw.ToolbarView {
@@ -38,7 +38,7 @@ template $GradiaGradientStepDialog: Adw.Dialog {
 
         Adw.PreferencesGroup steps_group {
           title: _("Gradient Steps");
-          description: _("You may have upto five steps");
+          description: _("You can add up to five steps");
           [header-suffix]
           Button add_step_button {
             label: _("Add Step");

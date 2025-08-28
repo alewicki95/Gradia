@@ -5,7 +5,9 @@ template $GradiaImageSelector : Adw.PreferencesGroup {
   title: _("Image Background");
 
   [header-suffix]
-  $GradiaImagePresetButton preset_button {}
+  $GradiaImagePresetButton preset_button {
+    tooltip-text: _("Image Presets…");
+  }
 
   Adw.ButtonRow select_image_button_row {
     title: _("Select Image");

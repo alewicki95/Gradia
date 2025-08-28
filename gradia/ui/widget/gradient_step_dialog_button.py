@@ -85,7 +85,6 @@ class GradientStepRow(Adw.ActionRow):
         position_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         position_box.append(self.position_spinbutton)
 
-
         self.remove_button = Gtk.Button(icon_name="user-trash-symbolic")
         self.remove_button.add_css_class("destructive-action")
         self.remove_button.connect("clicked", self._on_remove_clicked)

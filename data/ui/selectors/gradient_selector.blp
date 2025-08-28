@@ -7,8 +7,12 @@ template $GradiaGradientSelector : Adw.PreferencesGroup {
 
   [header-suffix]
   Box {
-    $GradiaGradientStepDialogButton step_dialog_button {}
-    $GradiaGradientPresetButton preset_button {}
+    $GradiaGradientStepDialogButton step_dialog_button {
+      tooltip-text: _("Open Step Dialog");
+    }
+    $GradiaGradientPresetButton preset_button {
+      tooltip-text: _("Gradient Presets…");
+    }
   }
 
   Adw.ActionRow gradient_preview_row {
