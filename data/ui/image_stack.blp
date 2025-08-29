@@ -2,7 +2,7 @@ using Gtk 4.0;
 using Adw 1;
 
 template $GradiaImageStack : Adw.Bin {
-  width-request: 375;
+  width-request: 360;
   child: $DropOverlay drop_overlay {
     title: _("Drop Image Here");
     child-widget:Adw.ToolbarView toolbar_view {
@@ -63,6 +63,20 @@ template $GradiaImageStack : Adw.Bin {
                   "osd-box"
                 ]
 
+                Gtk.Revealer sidebar_revealer {
+                  transition-type: slide_right;
+                  transition-duration: 300;
+                  reveal-child:true;
+                    Gtk.Button sidebar_button {
+                      icon-name: "sidebar-show-symbolic";
+                      tooltip-text: _("Open Sidebar");
+                      action-name: "win.sidebar-shown";
+                      action-target: true;
+                      visible: false;
+                      styles ["flat"]
+                    }
+                }
+
                 Gtk.Button crop_button {
                   icon-name: "crop-symbolic";
                   tooltip-text: _("Crop…");
@@ -122,6 +136,7 @@ template $GradiaImageStack : Adw.Bin {
               overflow: visible;
 
               Gtk.Button {
+                margin-bottom:2;
                 label: _("Confirm");
                 tooltip-text: _("Confirm Crop Selection");
                 action-name: "win.crop";

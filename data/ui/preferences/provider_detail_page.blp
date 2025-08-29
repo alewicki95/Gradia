@@ -19,7 +19,6 @@ template $ProviderDetailPage : Adw.NavigationPage {
 
       child: Adw.Clamp {
         maximum-size: 600;
-        tightening-threshold: 400;
 
         child: Gtk.Box main_box {
           orientation: vertical;
@@ -52,6 +51,7 @@ template $ProviderDetailPage : Adw.NavigationPage {
 
               Gtk.Label subtitle_label {
                 halign: start;
+                wrap: true;
                 styles ["dim-label"]
               }
             }

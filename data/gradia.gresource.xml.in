@@ -22,6 +22,7 @@
     <file preprocess="xml-stripblanks">ui/gradient_step_dialog.ui</file>
     <file>style.css</file>
     <file>style-dark.css</file>
+    <file>style-hc.css</file>
     <file>help.txt</file>
   </gresource>
   <gresource prefix="/be/alexandervanhee/gradia">

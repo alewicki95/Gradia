@@ -113,7 +113,7 @@ class CropOverlay(Gtk.Widget):
         self._clamp_crop_rectangle()
 
     def do_snapshot(self, snapshot: Gtk.Snapshot) -> None:
-        if not self.picture_widget or not self.picture_widget.get_paintable():
+        if not self.picture_widget or not self.picture_widget.get_paintable() or not self.has_crop():
             return
 
         width = self.get_width()
@@ -128,10 +128,11 @@ class CropOverlay(Gtk.Widget):
         crop_h = self.crop_height * img_h
 
         self._draw_background_overlay(snapshot, img_x, img_y, img_w, img_h, crop_x, crop_y, crop_w, crop_h)
-
         if self.interactive:
-            self._draw_inner_border(snapshot, crop_x, crop_y, crop_w, crop_h)
+            self._draw_inner_border(snapshot, Gdk.RGBA(red=1.0, green=1.0, blue=1.0, alpha=0.8) , crop_x, crop_y, crop_w, crop_h)
             self._draw_corner_lines(snapshot, crop_x, crop_y, crop_w, crop_h)
+        else:
+            self._draw_inner_border(snapshot, Gdk.RGBA(red=1.0, green=1.0, blue=1.0, alpha=0.5) , crop_x, crop_y, crop_w, crop_h)
 
     def _draw_background_overlay(self, snapshot: Gtk.Snapshot, img_x: float, img_y: float, img_w: float, img_h: float,
                                  crop_x: float, crop_y: float, crop_w: float, crop_h: float) -> None:
@@ -157,8 +158,7 @@ class CropOverlay(Gtk.Widget):
             right_overlay.init(crop_x + crop_w, crop_y - 0.20, (img_x + img_w) - (crop_x + crop_w), crop_h + 0.4)
             snapshot.append_color(overlay_color, right_overlay)
 
-    def _draw_inner_border(self, snapshot: Gtk.Snapshot, crop_x: float, crop_y: float, crop_w: float, crop_h: float) -> None:
-        border_color = Gdk.RGBA(red=1.0, green=1.0, blue=1.0, alpha=0.8)
+    def _draw_inner_border(self, snapshot: Gtk.Snapshot, border_color, crop_x: float, crop_y: float, crop_w: float, crop_h: float) -> None:
         border_width = 2.0
 
         top_border = Graphene.Rect.alloc()
@@ -507,6 +507,9 @@ class CropOverlay(Gtk.Widget):
 
     def get_crop_rectangle(self) -> tuple[float, float, float, float]:
         return self.crop_x, self.crop_y, self.crop_width, self.crop_height
+
+    def has_crop(self) -> bool:
+        return self.crop_width != 1 or self.crop_height != 1
 
     def set_crop_rectangle(self, x: float, y: float, width: float, height: float) -> None:
         self.crop_x = x

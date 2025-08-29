@@ -170,7 +170,7 @@ class FileDialogExporter(BaseImageExporter):
                 format_type = self._get_format_from_extension(save_path)
 
                 if format_type not in SUPPORTED_EXPORT_FORMATS:
-                    self.window._show_notification(_("Unsupported image file extension."))
+                    self.window._show_notification(_("Unsupported image file extension"))
                     dialog.destroy()
                     return
 
@@ -365,7 +365,6 @@ class CloseHandlerExporter(BaseImageExporter):
 
     def handle_close(self, copy: bool, save: bool, callback: callable = None):
         if not copy and (not save or not self.window.image.is_screenshot()):
-            print("returning")
             if callback:
                 callback()
             return

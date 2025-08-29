@@ -19,7 +19,7 @@ import random
 import re
 from typing import Callable, Optional
 from pathlib import Path
-from gi.repository import Adw, Gtk, GLib, Gdk, GdkPixbuf, Graphene, Gsk
+from gi.repository import Adw, Gtk, GLib, Gdk, GdkPixbuf, Graphene, Gsk, GObject
 
 from gradia.app_constants import PREDEFINED_GRADIENTS
 from gradia.backend.settings import Settings
@@ -75,14 +75,17 @@ class RecentImageGetter:
 
 
 class RoundedImage(Gtk.Widget):
-    def __init__(self, path: str, radius: float = 4.0, padding: int=16):
+    def __init__(self, path: str, radius: float = 4.0, padding: int = 8, compact: bool = False):
         super().__init__()
         self.radius = radius
         self.texture = None
         self.padding = padding
 
+        width = 155 if compact else 260
+        height = 120 if compact else 160
+
         try:
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(path, 260, 160)
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(path, width, height)
             self.texture = Gdk.Texture.new_for_pixbuf(pixbuf)
         except Exception as e:
             print(f"Failed to load image {path}: {e}")
@@ -125,11 +128,15 @@ class RecentPicker(Adw.Bin):
     FRAME_SPACING = 5
     IMAGE_WIDTH = 260
     IMAGE_HEIGHT = 160
+    COMPACT_IMAGE_WIDTH = 150
+    COMPACT_IMAGE_HEIGHT = 120
 
     item_grid: Gtk.FlowBox = Gtk.Template.Child()
 
     recent_overlay: Gtk.Overlay= Gtk.Template.Child()
     error_overlay: Adw.StatusPage = Gtk.Template.Child()
+
+    compact = GObject.Property(type=bool, default=False)
 
     def __init__(self, callback: Optional[Callable] = None, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -147,13 +154,26 @@ class RecentPicker(Adw.Bin):
         self.gradient_colors = list(self.gradient_colors)
         self.original_gradient_indexes = list(self.original_gradient_indexes)
 
+        self.connect("notify::compact", self._on_compact_changed)
+        self._setup_cards()
+        self._load_images()
+
+    def _on_compact_changed(self, *args) -> None:
         self._setup_cards()
         self._load_images()
 
     def _setup_cards(self) -> None:
+        for child in list(self.item_grid):
+            self.item_grid.remove(child)
+
+        self.image_bins.clear()
+
+        width = self.COMPACT_IMAGE_WIDTH if self.compact else self.IMAGE_WIDTH
+        height = self.COMPACT_IMAGE_HEIGHT if self.compact else self.IMAGE_HEIGHT
+
         for index in range(6):
             image_bin = Adw.Bin()
-            image_bin.set_size_request(self.IMAGE_WIDTH, self.IMAGE_HEIGHT)
+            image_bin.set_size_request(width, height)
             image_bin.add_css_class("card")
             self._apply_gradient_to_button(image_bin, index)
             placeholder = Gtk.Box()
@@ -214,12 +234,16 @@ class RecentPicker(Adw.Bin):
         else:
             self.error_overlay.set_visible(False)
             self.item_grid.set_opacity(1)
+
+        radius = 2.0 if self.compact else 4.0
+        padding = 4 if self.compact else 8
+
         for i in range(6):
             if i < len(recent_files):
                 file = recent_files[i]
 
                 try:
-                    rounded = RoundedImage(str(file.path))
+                    rounded = RoundedImage(str(file.path), radius=radius, padding=padding, compact=self.compact)
                     self.image_bins[i].set_child(rounded)
                     self.image_bins[i].set_sensitive(True)
                 except Exception as e:
@@ -231,4 +255,3 @@ class RecentPicker(Adw.Bin):
                 icon = Gtk.Image.new_from_icon_name("image-missing-symbolic")
                 self.image_bins[i].set_child(icon)
                 self.image_bins[i].set_sensitive(False)
-

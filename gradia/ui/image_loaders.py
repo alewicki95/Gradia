@@ -185,7 +185,7 @@ class DragDropImageLoader(BaseImageLoader):
                     return False
 
                 if not self._is_supported_format(file_path):
-                    self.window._show_notification(_("Not a supported image format."))
+                    self.window._show_notification(_("Not a supported image format"))
                     return False
 
                 self._set_image_and_update_ui(LoadedImage(file_path, ImageOrigin.DragDrop))
@@ -197,7 +197,7 @@ class DragDropImageLoader(BaseImageLoader):
 
             else:
                 logger.info("Unsupported URI scheme:", uri)
-                self.window._show_notification(_("Unsupported file drop."))
+                self.window._show_notification(_("Unsupported file drop"))
                 return False
         return False
 
@@ -211,7 +211,7 @@ class DragDropImageLoader(BaseImageLoader):
                 lower_path = path.lower()
                 supported_extensions = [ext for ext, _ in self.SUPPORTED_INPUT_FORMATS]
                 if not any(lower_path.endswith(ext) for ext in supported_extensions):
-                    self.window._show_notification(_("URL is not a valid image format."))
+                    self.window._show_notification(_("URL is not a valid image format"))
                     return False
                 else:
                     logger.info("Fallback: file extension matches supported image format.")
@@ -222,7 +222,7 @@ class DragDropImageLoader(BaseImageLoader):
             urllib.request.urlretrieve(url, temp_path)
 
             if not self._is_supported_format(temp_path):
-                self.window._show_notification(_("URL is not a supported image format."))
+                self.window._show_notification(_("URL is not a supported image format"))
                 os.remove(temp_path)
                 return False
 
@@ -266,9 +266,9 @@ class ClipboardImageLoader(BaseImageLoader):
         except Exception as e:
             error_msg = str(e)
             if "No compatible transfer format found" in error_msg:
-                self.window._show_notification(_("Clipboard does not contain an image."))
+                self.window._show_notification(_("Clipboard does not contain an image"))
             else:
-                self.window._show_notification(_("Failed to load image from clipboard."))
+                self.window._show_notification(_("Failed to load image from clipboard"))
                 logger.error(f"Error processing clipboard image: {e}")
 
 

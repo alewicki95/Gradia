@@ -51,7 +51,7 @@ template $ProviderListPage : Adw.NavigationPage {
 
           child: Adw.StatusPage error_status {
             title: _("An error occurred");
-            description: _("Please try again later.");
+            description: _("Please try again later");
             icon-name: "dialog-error-symbolic";
           };
         };
@@ -67,8 +67,7 @@ template $ProviderListPage : Adw.NavigationPage {
 
         content: Adw.PreferencesPage providers_page {
           Adw.PreferencesGroup providers_group {
-            description: _("Select a third party image upload provider.");
-
+            description: _("Select a third party image upload provider. These have their own terms and conditions.");
           }
         };
       };

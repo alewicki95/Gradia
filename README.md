@@ -59,8 +59,8 @@ If you'd like Gradia to **open automatically** after taking a screenshot, you ca
 ## Screenshots
 
 <p align="center">
-  <img src="screenshots/showcase.webp" alt="Showcase screenshot" style="width:45%; margin-right: 5%;">
-  <img src="screenshots/home.webp" alt="Home screenshot" style="width:45%;">
+  <img src="screenshots/showcase.png" alt="Showcase screenshot" style="width:45%; margin-right: 5%;">
+  <img src="screenshots/home.png" alt="Home screenshot" style="width:45%;">
 </p>
 
 ## Unofficial packages

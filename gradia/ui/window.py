@@ -138,7 +138,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.create_action("aspect-ratio-crop", lambda _, variant: self.image_bin.set_aspect_ratio(variant.get_double()), vt="d")
         self.create_action("crop", lambda *_: self.image_bin.on_toggle_crop(), ["<Primary>r"])
         self.create_action("reset-crop", lambda *_: self.image_bin.reset_crop_selection(), ["<Primary><Shift>r"])
-
+        self.create_action("sidebar-shown", lambda action, param: self.split_view.set_show_sidebar(param.get_boolean()), vt="b")
 
         self.create_action("zoom-in", lambda *_: self.image_bin.zoom_in(), ["<Control>plus", "<Control>equal", "<Control>KP_Add"])
         self.create_action("zoom-out", lambda *_: self.image_bin.zoom_out(), ["<Control>minus", "<Control>KP_Subtract"])
@@ -171,7 +171,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
     def _setup_image_stack(self) -> None:
         self.image_bin = ImageStack()
-        self.image_bin.connect("crop-toggled", self._on_crop_toggled)
         self.image_stack = self.image_bin.stack
         self.picture = self.image_bin.picture
         self.drawing_overlay = self.image_bin.drawing_overlay
@@ -457,10 +456,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     def set_screenshot_subfolder(self, subfolder) -> None:
         self.settings.screenshot_subfolder = subfolder
         self.welcome_content.refresh_recent_picker()
-
-    def _on_crop_toggled(self, image_stack: ImageStack, enabled: bool) -> None:
-        self.split_view.set_show_sidebar(not enabled)
-
 
     def _run_custom_command(self) -> None:
         if self.settings.show_export_confirm_dialog:

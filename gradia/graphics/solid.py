@@ -96,7 +96,7 @@ class ColorPresetButton(Gtk.Button):
         self.checkmark.set_pixel_size(16)
         self.checkmark.add_css_class("checkmark-icon")
 
-        if is_light_color_hex(self.color):
+        if is_light_color_hex(self.color) or self.alpha == 0:
             self.checkmark.add_css_class("dark")
         else:
              self.checkmark.remove_css_class("dark")

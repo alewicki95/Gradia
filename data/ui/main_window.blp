@@ -5,7 +5,6 @@ template $GradiaMainWindow : Adw.ApplicationWindow {
   title: "Gradia";
   default-width: 975;
   default-height: 675;
-  width-request: 675;
 
   content: Adw.ToastOverlay toast_overlay {
     Adw.ToolbarView toolbar_view {
@@ -22,8 +21,21 @@ template $GradiaMainWindow : Adw.ApplicationWindow {
 
         Gtk.StackPage main_page {
           name: "main";
+          child: Adw.BreakpointBin breakpoint_bin {
+            width-request: 200;
+            height-request: 50;
+            Adw.Breakpoint breakpoint {
+              condition ("max-width: 695sp")
+              setters {
+                split_view.collapsed: true;
+              }
+            }
 
-          child: Adw.OverlaySplitView split_view {};
+            child: Adw.OverlaySplitView split_view {
+              collapsed: false;
+              show-sidebar: true;
+            };
+          };
         }
       };
     }
