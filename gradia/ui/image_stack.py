@@ -128,6 +128,7 @@ class ImageStack(Adw.Bin):
     def _on_zoom_level_changed(self, widget, pspec) -> None:
         zoom_level = widget.get_property("zoom-level")
         percentage = int(zoom_level * 100)
+        self.zoom_label.set_visible(not self._compact_mode)
         self.zoom_label.set_text(f"{percentage}%")
         self.emit("zoom-changed", zoom_level)
 

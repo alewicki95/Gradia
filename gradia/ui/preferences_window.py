@@ -72,7 +72,7 @@ class PreferencesWindow(Adw.PreferencesDialog):
     confirm_upload_switch: Adw.SwitchRow = Gtk.Template.Child()
     save_format_combo: Adw.ComboRow = Gtk.Template.Child()
     provider_name: Gtk.Label = Gtk.Template.Child()
-    exiting_toggle_group = Gtk.Template.Child()
+    exiting_combo: Adw.ComboRow = Gtk.Template.Child()
 
 
     def __init__(self, parent_window: Adw.ApplicationWindow, **kwargs):
@@ -85,8 +85,6 @@ class PreferencesWindow(Adw.PreferencesDialog):
         self.available_folders = self.folder_finder.get_screenshot_folders()
         self.current_selected_folder = self.folder_finder.get_current_folder()
         self.folder_rows = []
-        self.format_toggle_group = None
-        self.format_toggles = []
 
         self._setup_widgets()
         self._connect_signals()
@@ -102,7 +100,8 @@ class PreferencesWindow(Adw.PreferencesDialog):
     def _setup_widgets(self):
         self._update_expander_title()
         self._create_folder_rows()
-        self._create_save_format_toggle_group()
+        self._setup_save_format_combo()
+        self._setup_exiting_combo()
         self._setup_provider_display()
         self._bind_settings()
 
@@ -146,32 +145,60 @@ class PreferencesWindow(Adw.PreferencesDialog):
             self.folder_expander.add_row(row)
             self.folder_rows.append(row)
 
-    def _create_save_format_toggle_group(self):
+    def _setup_save_format_combo(self):
         current_format = self.settings.export_format
-        toggle_group = Adw.ToggleGroup(valign=Gtk.Align.CENTER)
-        toggle_group.add_css_class("round")
-
-        self.format_toggle_group = toggle_group
-        self.format_toggles = []
+        string_list = Gtk.StringList()
 
         format_keys = list(SUPPORTED_EXPORT_FORMATS.keys())
+        self.format_keys = format_keys
 
-        for i, fmt in enumerate(format_keys):
+        for fmt in format_keys:
             display_name = SUPPORTED_EXPORT_FORMATS[fmt]['shortname']
-            toggle = Adw.Toggle(label=display_name, name=fmt)
-            toggle_group.add(toggle)
+            string_list.append(display_name)
 
-            self.format_toggles.append(toggle)
-            if fmt == current_format:
-                toggle_group.set_active_name(fmt)
+        self.save_format_combo.set_model(string_list)
 
-        toggle_group.connect("notify::active-name", self._on_format_toggle_changed)
-        self.save_format_combo.add_suffix(toggle_group)
+        try:
+            current_index = format_keys.index(current_format)
+            self.save_format_combo.set_selected(current_index)
+        except ValueError:
+            self.save_format_combo.set_selected(0)
 
-    def _on_format_toggle_changed(self, toggle_group: Adw.ToggleGroup, pspec) -> None:
-        active_name = toggle_group.get_active_name()
-        if active_name:
-            self.settings.export_format = active_name
+        self.save_format_combo.connect("notify::selected", self._on_save_format_changed)
+
+    def _setup_exiting_combo(self):
+        current_exit_method = self.settings.exit_method
+        string_list = Gtk.StringList()
+
+        exit_options = [
+            ("confirm", _("Ask For Confirmation")),
+            ("copy", _("Copy and Close ")),
+            ("none", _("Close Instantly"))
+        ]
+        self.exit_option_keys = [key for key, _ in exit_options]
+
+        for key, display_name in exit_options:
+            string_list.append(display_name)
+
+        self.exiting_combo.set_model(string_list)
+
+        try:
+            current_index = self.exit_option_keys.index(current_exit_method)
+            self.exiting_combo.set_selected(current_index)
+        except ValueError:
+            self.exiting_combo.set_selected(0)
+
+        self.exiting_combo.connect("notify::selected", self._on_exit_method_changed)
+
+    def _on_save_format_changed(self, combo_row, pspec) -> None:
+        selected = combo_row.get_selected()
+        if selected < len(self.format_keys):
+            self.settings.export_format = self.format_keys[selected]
+
+    def _on_exit_method_changed(self, combo_row, pspec) -> None:
+        selected = combo_row.get_selected()
+        if selected < len(self.exit_option_keys):
+            self.settings.exit_method = self.exit_option_keys[selected]
 
     def _connect_signals(self):
         self.help_button.connect("activated", self._on_help_button_clicked)
@@ -216,7 +243,6 @@ class PreferencesWindow(Adw.PreferencesDialog):
     def _bind_settings(self):
         self.settings.bind_switch(self.delete_screenshot_switch,"trash-screenshots-on-close")
         self.settings.bind_switch(self.confirm_upload_switch,"show-export-confirm-dialog")
-        self.settings.bind_toggle_group(self.exiting_toggle_group,"exit-method")
         self.settings.bind_switch(self.overwrite_screenshot_switch,"overwrite-screenshot")
 
     @Gtk.Template.Callback()
