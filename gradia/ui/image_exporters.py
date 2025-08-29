@@ -365,7 +365,6 @@ class CloseHandlerExporter(BaseImageExporter):
 
     def handle_close(self, copy: bool, save: bool, callback: callable = None):
         if not copy and (not save or not self.window.image.is_screenshot()):
-            print("returning")
             if callback:
                 callback()
             return
