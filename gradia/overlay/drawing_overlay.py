@@ -516,7 +516,7 @@ class DrawingOverlay(Gtk.DrawingArea):
             if mode == DrawingMode.PEN:
                 self.actions.append(StrokeAction(self.current_stroke.copy(), self.options.copy()))
             else:
-                self.actions.append(HighlighterAction(self.current_stroke.copy(), self.options.copy()))
+                self.actions.append(HighlighterAction(self.current_stroke.copy(), self.options.copy(), self.current_shift_pressed))
             self.current_stroke.clear()
         elif self.start_point and self.end_point:
             if mode == DrawingMode.ARROW:
@@ -577,7 +577,7 @@ class DrawingOverlay(Gtk.DrawingArea):
             if self.options.mode == DrawingMode.PEN and len(self.current_stroke) > 1:
                 StrokeAction(self.current_stroke, self.options.copy()).draw(cr, self._image_to_widget_coords, scale)
             elif self.options.mode == DrawingMode.HIGHLIGHTER and len(self.current_stroke) > 1:
-                HighlighterAction(self.current_stroke, self.options.copy()).draw(cr, self._image_to_widget_coords, scale)
+                HighlighterAction(self.current_stroke, self.options.copy(), self.current_shift_pressed).draw(cr, self._image_to_widget_coords, scale)
             elif self.start_point and self.end_point:
                 if self.options.mode == DrawingMode.ARROW:
                     ArrowAction(self.start_point, self.end_point,self.current_shift_pressed, self.options.copy()).draw(cr, self._image_to_widget_coords, scale)

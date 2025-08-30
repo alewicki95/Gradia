@@ -497,10 +497,15 @@ class CircleAction(RectAction):
        cr.stroke()
 
 class HighlighterAction(StrokeAction):
-    def __init__(self, stroke: list[tuple[int, int]], options):
-        self.stroke = stroke
+    def __init__(self, stroke: list[tuple[int, int]], options, shift: bool):
+        if shift and len(stroke) >= 2:
+            start_point = stroke[0]
+            end_point = stroke[-1]
+            self.stroke = [start_point, (end_point[0], start_point[1])]
+        else:
+            self.stroke = stroke
         self.color = options.primary_color
-        self.pen_size = options.size * 2
+        self.pen_size = options.size
 
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
         if len(self.stroke) < 2:
