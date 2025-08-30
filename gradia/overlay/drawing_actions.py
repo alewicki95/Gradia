@@ -165,6 +165,13 @@ class StrokeAction(DrawingAction):
         self.stroke = [(x + dx, y + dy) for x, y in self.stroke]
 
 class ArrowAction(DrawingAction):
+    ARROW_HEAD_SIZE_MULTIPLIER = 4
+    HEAD_WIDTH_RATIO = 0.6
+    SHAFT_WIDTH_RATIO = 0.5
+    SHAFT_START_WIDTH_RATIO = 0.3
+    MAX_HEAD_LENGTH_RATIO = 0.3
+    MIN_DISTANCE_THRESHOLD = 2
+
     def __init__(self, start: tuple[int, int], end: tuple[int, int], shift: bool, options):
         self.start = start
         if shift:
@@ -177,37 +184,52 @@ class ArrowAction(DrawingAction):
         else:
             self.end = end
         self.color = options.primary_color
-        self.arrow_head_size = options.size *4
+        self.arrow_head_size = options.size * self.ARROW_HEAD_SIZE_MULTIPLIER
         self.width = options.size
+
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
         start_x, start_y = image_to_widget_coords(*self.start)
         end_x, end_y = image_to_widget_coords(*self.end)
         distance = math.hypot(end_x - start_x, end_y - start_y)
-        if distance < 2:
+
+        if distance < self.MIN_DISTANCE_THRESHOLD:
             return
+
         cr.set_source_rgba(*self.color)
-        cr.set_line_width(self.width * scale)
-        cr.move_to(start_x, start_y)
-        cr.line_to(end_x, end_y)
-        cr.stroke()
         angle = math.atan2(end_y - start_y, end_x - start_x)
-        head_len = min(self.arrow_head_size * scale, distance * 0.3)
-        head_angle = math.pi / 6
-        x1 = end_x - head_len * math.cos(angle - head_angle)
-        y1 = end_y - head_len * math.sin(angle - head_angle)
-        x2 = end_x - head_len * math.cos(angle + head_angle)
-        y2 = end_y - head_len * math.sin(angle + head_angle)
-        cr.move_to(end_x, end_y)
-        cr.line_to(x1, y1)
-        cr.move_to(end_x, end_y)
-        cr.line_to(x2, y2)
-        cr.stroke()
+        head_len = min(self.arrow_head_size * scale, distance * self.MAX_HEAD_LENGTH_RATIO)
+        head_width = head_len * self.HEAD_WIDTH_RATIO
+        shaft_width = head_width * self.SHAFT_WIDTH_RATIO
+
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+        perp_cos = -sin_a
+        perp_sin = cos_a
+
+        shaft_end_x = end_x - head_len * cos_a
+        shaft_end_y = end_y - head_len * sin_a
+
+        shaft_start_half = shaft_width * self.SHAFT_START_WIDTH_RATIO
+        shaft_end_half = shaft_width
+        head_half = head_width
+
+        cr.move_to(start_x + shaft_start_half * perp_cos, start_y + shaft_start_half * perp_sin)
+        cr.arc(start_x, start_y, shaft_start_half, angle + math.pi/2, angle - math.pi/2)
+        cr.line_to(shaft_end_x - shaft_end_half * perp_cos, shaft_end_y - shaft_end_half * perp_sin)
+        cr.line_to(shaft_end_x - head_half * perp_cos, shaft_end_y - head_half * perp_sin)
+        cr.line_to(end_x, end_y)
+        cr.line_to(shaft_end_x + head_half * perp_cos, shaft_end_y + head_half * perp_sin)
+        cr.line_to(shaft_end_x + shaft_end_half * perp_cos, shaft_end_y + shaft_end_half * perp_sin)
+        cr.close_path()
+        cr.fill()
+
     def get_bounds(self) -> tuple[int, int, int, int]:
         min_x = min(self.start[0], self.end[0])
         max_x = max(self.start[0], self.end[0])
         min_y = min(self.start[1], self.end[1])
         max_y = max(self.start[1], self.end[1])
-        return self.apply_padding((min_x, min_y, max_x, max_y), extra_padding_img=self.arrow_head_size)
+        return self.apply_padding((min_x, min_y, max_x, max_y))
+
     def translate(self, dx: int, dy: int):
         self.start = (self.start[0] + dx, self.start[1] + dy)
         self.end = (self.end[0] + dx, self.end[1] + dy)
@@ -379,7 +401,7 @@ class TextAction(DrawingAction):
         top_img = y_img - text_height_img - self.PADDING_Y_IMG
         bottom_img = y_img + self.PADDING_Y_IMG
 
-        return self.apply_padding((left_img, top_img, right_img, bottom_img), extra_padding_img=int(self.font_size * 0.1))
+        return self.apply_padding((left_img, top_img, right_img, bottom_img))
 
     def translate(self, dx: int, dy: int):
         self.position = (self.position[0] + dx, self.position[1] + dy)
