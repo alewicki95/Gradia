@@ -46,7 +46,7 @@ class CropOverlay(Gtk.Widget):
         self.crop_width = 1.0
         self.crop_height = 1.0
 
-        self.handle_size = 18
+        self.handle_size = 30
         self.edge_grab_distance = 8
         self.dragging_handle = None
         self.dragging_edge = None
@@ -55,10 +55,11 @@ class CropOverlay(Gtk.Widget):
         self.drag_start_y = 0
         self.drag_start_crop = None
 
-        self.gesture_click = Gtk.GestureClick()
-        self.gesture_click.connect("pressed", self._on_button_pressed)
-        self.gesture_click.connect("released", self._on_button_released)
-        self.add_controller(self.gesture_click)
+        self.gesture_drag = Gtk.GestureDrag()
+        self.gesture_drag.connect("drag-begin", self._on_drag_begin)
+        self.gesture_drag.connect("drag-update", self._on_drag_update)
+        self.gesture_drag.connect("drag-end", self._on_drag_end)
+        self.add_controller(self.gesture_drag)
 
         self.motion_controller = Gtk.EventControllerMotion()
         self.motion_controller.connect("motion", self._on_motion)
@@ -297,31 +298,47 @@ class CropOverlay(Gtk.Widget):
 
         return False
 
-    def _on_button_pressed(self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float) -> None:
+    def _on_drag_begin(self, gesture: Gtk.GestureDrag, start_x: float, start_y: float) -> None:
         if not self.interactive:
             return
 
-        handle = self._get_handle_at_point(x, y)
+        handle = self._get_handle_at_point(start_x, start_y)
         if handle:
             self.dragging_handle = handle
             self.drag_start_crop = (self.crop_x, self.crop_y, self.crop_width, self.crop_height)
             gesture.set_state(Gtk.EventSequenceState.CLAIMED)
         else:
-            edge = self._get_edge_at_point(x, y)
+            edge = self._get_edge_at_point(start_x, start_y)
             if edge:
                 self.dragging_edge = edge
                 self.drag_start_crop = (self.crop_x, self.crop_y, self.crop_width, self.crop_height)
                 gesture.set_state(Gtk.EventSequenceState.CLAIMED)
-            elif self._is_point_in_crop_area(x, y):
+            elif self._is_point_in_crop_area(start_x, start_y):
                 self.dragging_area = True
                 self.drag_start_crop = (self.crop_x, self.crop_y, self.crop_width, self.crop_height)
                 gesture.set_state(Gtk.EventSequenceState.CLAIMED)
 
         if self.dragging_handle or self.dragging_edge or self.dragging_area:
-            self.drag_start_x = x
-            self.drag_start_y = y
+            self.drag_start_x = start_x
+            self.drag_start_y = start_y
 
-    def _on_button_released(self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float) -> None:
+    def _on_drag_update(self, gesture: Gtk.GestureDrag, offset_x: float, offset_y: float) -> None:
+        if not self.interactive:
+            return
+
+        if (self.dragging_handle or self.dragging_edge or self.dragging_area) and self.drag_start_crop:
+            current_x = self.drag_start_x + offset_x
+            current_y = self.drag_start_y + offset_y
+
+            if self.dragging_handle:
+                self._update_crop_from_handle_drag(current_x, current_y)
+            elif self.dragging_edge:
+                self._update_crop_from_edge_drag(current_x, current_y)
+            elif self.dragging_area:
+                self._update_crop_from_area_drag(current_x, current_y)
+            self.queue_draw()
+
+    def _on_drag_end(self, gesture: Gtk.GestureDrag, offset_x: float, offset_y: float) -> None:
         if not self.interactive:
             return
 
@@ -334,15 +351,7 @@ class CropOverlay(Gtk.Widget):
         if not self.interactive:
             return
 
-        if (self.dragging_handle or self.dragging_edge or self.dragging_area) and self.drag_start_crop:
-            if self.dragging_handle:
-                self._update_crop_from_handle_drag(x, y)
-            elif self.dragging_edge:
-                self._update_crop_from_edge_drag(x, y)
-            elif self.dragging_area:
-                self._update_crop_from_area_drag(x, y)
-            self.queue_draw()
-        else:
+        if not (self.dragging_handle or self.dragging_edge or self.dragging_area):
             self._update_cursor(x, y)
 
     def _update_cursor(self, x: float, y: float):
@@ -518,4 +527,3 @@ class CropOverlay(Gtk.Widget):
         self.crop_height = height
         self._clamp_crop_rectangle()
         self.queue_draw()
-
