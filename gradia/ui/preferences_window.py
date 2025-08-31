@@ -260,6 +260,7 @@ class ScreenshotGuidePage(Adw.NavigationPage):
 
     interactive_entry: Gtk.Entry = Gtk.Template.Child()
     fullscreen_entry: Gtk.Entry = Gtk.Template.Child()
+    delayed_entry: Gtk.Entry = Gtk.Template.Child()
 
     def __init__(self, preferences_dialog, **kwargs):
         super().__init__(**kwargs)
@@ -285,6 +286,7 @@ class ScreenshotGuidePage(Adw.NavigationPage):
     def _connect_signals(self):
         self.interactive_entry.connect("icon-press", self._on_entry_icon_press)
         self.fullscreen_entry.connect("icon-press", self._on_entry_icon_press)
+        self.delayed_entry.connect("icon-press", self._on_entry_icon_press)
 
     def _on_entry_icon_press(self, entry: Gtk.Entry, icon_pos: Gtk.EntryIconPosition) -> None:
         if icon_pos == Gtk.EntryIconPosition.SECONDARY:

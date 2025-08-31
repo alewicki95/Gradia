@@ -412,7 +412,7 @@ class CloseHandlerExporter(BaseImageExporter):
             if save and self.window.image.is_screenshot:
                 save_path = self.window.image.screenshot_path
                 results['save_folder'] = self.window.image.get_folder_path()
-                print(save_path)
+                logger.info(f"Overwriting {save_path} with annotated version.")
                 if save_path:
                     format_type = self.file_exporter._get_format_from_extension(save_path)
                     if format_type:

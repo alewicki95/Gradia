@@ -24,11 +24,11 @@ template $GradiaScreenshotGuidePage : Adw.NavigationPage {
                 margin-start: 24;
                 margin-end: 24;
 
-                Gtk.Box header_box {
+                Gtk.Box {
                   orientation: vertical;
                   spacing: 8;
 
-                  Gtk.Label page_title {
+                  Gtk.Label {
                     label: _("Shortcut Setup Instructions");
                     styles ["title-1"]
                     halign: start;
@@ -36,32 +36,32 @@ template $GradiaScreenshotGuidePage : Adw.NavigationPage {
                   }
                 }
 
-                Gtk.Box content_box {
+                Gtk.Box {
                   orientation: vertical;
                   spacing: 24;
 
-                  Gtk.Label instruction_label {
+                  Gtk.Label {
                     label: _("If you'd like the app to <b>open automatically</b> after taking a screenshot, you can set up a custom keyboard shortcut:\n\n<b>Steps:</b>\n1. Go to <b>Settings</b> → <b>Keyboard</b> → <b>View and Customize Shortcuts</b> → <b>Custom Shortcuts</b>.\n2. Click the <b>+</b> button to create a new shortcut.\n3. Set the <b>Name</b> to something like <i>Open Gradia with Screenshot</i>.\n4. For the <b>Command</b>, copy one of the commands below:");
                     use-markup: true;
                     wrap: true;
                     halign: start;
                   }
 
-                  Gtk.Box commands_section {
+                  Gtk.Box {
                     orientation: vertical;
                     spacing: 20;
 
-                    Gtk.Box interactive_section {
+                    Gtk.Box {
                       orientation: vertical;
                       spacing: 12;
 
-                      Gtk.Label interactive_title {
+                      Gtk.Label {
                         label: _("Interactive Screenshot");
                         styles ["title-4"]
                         halign: start;
                       }
 
-                      Gtk.Label interactive_description {
+                      Gtk.Label{
                         label: _("Allows you to select an area to screenshot");
                         styles ["caption", "dimmed"]
                         halign: start;
@@ -76,17 +76,17 @@ template $GradiaScreenshotGuidePage : Adw.NavigationPage {
                       }
                     }
 
-                    Gtk.Box fullscreen_section {
+                    Gtk.Box {
                       orientation: vertical;
                       spacing: 12;
 
-                      Gtk.Label fullscreen_title {
+                      Gtk.Label {
                         label: _("Full Screen Screenshot");
                         styles ["title-4"]
                         halign: start;
                       }
 
-                      Gtk.Label fullscreen_description {
+                      Gtk.Label{
                         label: _("Takes a screenshot of all screens instantly");
                         styles ["caption", "dimmed"]
                         halign: start;
@@ -100,15 +100,43 @@ template $GradiaScreenshotGuidePage : Adw.NavigationPage {
                         secondary-icon-tooltip-text: _("Copy to clipboard");
                       }
                     }
+                    Gtk.Label {
+                      label: _("5. Assign a keyboard shortcut of your choice (<tt>Ctrl + Print</tt> should be free by default).");
+                      use-markup: true;
+                      wrap: true;
+                      selectable: true;
+                      halign: start;
+                    }
+                    Gtk.Separator {
+                      orientation: horizontal;
+                      hexpand: true;
+                    }
+                    Gtk.Box {
+                      orientation: vertical;
+                      spacing: 12;
+
+                      Gtk.Label {
+                        label: _("Delayed Screenshot");
+                        styles ["title-4"]
+                        halign: start;
+                      }
+
+                      Gtk.Label{
+                        label: _("Delay the capture by a given duration (in milliseconds).");
+                        styles ["caption", "dimmed"]
+                        halign: start;
+                      }
+
+                      Gtk.Entry delayed_entry {
+                        editable: false;
+                        text: "--delay=1000";
+                        styles ["monospace"]
+                        secondary-icon-name: "edit-copy-symbolic";
+                        secondary-icon-tooltip-text: _("Copy to clipboard");
+                      }
+                    }
                   }
 
-                  Gtk.Label final_label {
-                    label: _("5. Assign a keyboard shortcut of your choice (<tt>Ctrl + Print</tt> should be free by default).");
-                    use-markup: true;
-                    wrap: true;
-                    selectable: true;
-                    halign: start;
-                  }
                 }
               };
             };
