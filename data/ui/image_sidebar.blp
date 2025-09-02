@@ -75,15 +75,8 @@ template $GradiaImageSidebar : Adw.Bin {
           };
         }
 
-        Adw.ActionRow aspect_ratio_row {
-          title: _("Aspect Ratio");
-          activatable-widget: aspect_ratio_button;
-          [suffix]
-          Gtk.MenuButton aspect_ratio_button {
-            label: "Auto";
-            valign: center;
-            styles ["flat-dropdown"]
-          }
+        $GradiaAspectRatioSelector aspect_ratio_selector {
+          ratio-changed => $_on_aspect_ratio_changed();
         }
 
         Adw.ActionRow shadow_strength_row {
@@ -218,25 +211,6 @@ template $GradiaImageSidebar : Adw.Bin {
         "toolbar"
       ]
     }
-  };
-}
-
-Gtk.Popover gradient_popover {
-  autohide: true;
-  has-arrow: true;
-
-  child: Gtk.FlowBox popover_flowbox {
-    max-children-per-line: 3;
-    selection-mode: none;
-    row-spacing: 10;
-    column-spacing: 10;
-    homogeneous: true;
-
-    valign: center;
-    margin-top: 10;
-    margin-bottom: 10;
-    margin-start: 10;
-    margin-end: 10;
   };
 }
 
