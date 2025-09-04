@@ -137,16 +137,19 @@ template $GradiaImageSidebar : Adw.Bin {
 
         Adw.ActionRow filename_row {
           title: _("Name");
-          subtitle: _("No file loaded");
+          subtitle: _("N/A");
+          styles ["property"]
         }
 
         Adw.ActionRow location_row {
           title: _("Location");
-          subtitle: _("No file loaded");
-
+          subtitle: _("N/A");
+          activatable: true;
+          activatable-widget: open_folder_button;
+          styles ["property"]
 
           [suffix]
-          Button {
+          Button open_folder_button {
             valign: center;
             icon-name: "folder-open-symbolic";
             action-name: "win.open-folder";
@@ -160,6 +163,7 @@ template $GradiaImageSidebar : Adw.Bin {
         Adw.ActionRow processed_size_row {
           title: _("Modified image size");
           subtitle: _("N/A");
+          styles ["property"]
         }
       }
       };

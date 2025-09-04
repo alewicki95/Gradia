@@ -69,7 +69,7 @@ class LoadedImage:
         elif self.origin == ImageOrigin.SourceImage:
             return _("Source")
         else:
-            return os.path.dirname(self.image_path)
+            return os.path.basename(os.path.dirname(self.image_path))
 
     def has_proper_name(self) -> bool:
         return self.origin not in {
