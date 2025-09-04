@@ -9,14 +9,23 @@ template $GradiaPreferencesWindow : Adw.PreferencesDialog {
     title: _("General");
     Adw.PreferencesGroup {
       title: _("Screenshots Folder");
-      Adw.ExpanderRow folder_expander {
-        title: _("Select Folder");
-        subtitle: _("What folder to use for the home page");
-        show-enable-switch: false;
+
+      Adw.ActionRow {
+        title: _("Recent Folder");
+        activatable: true;
+        activated => $on_folder_row_clicked();
+
         [suffix]
-        Gtk.Label folder_label {
-          label: "" ;
-          styles ["dim-label"]
+        Box {
+          spacing: 6;
+          valign: center;
+          Label folder_label {
+            label: "-";
+            styles ["dim-label"]
+          }
+          Gtk.Image {
+            icon-name: "go-next-symbolic";
+          }
         }
       }
     }

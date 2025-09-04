@@ -57,21 +57,19 @@ class RecentImageGetter:
         return [RecentFile(f) for f in top_files]
 
     def _get_screenshots_directory(self) -> Path | None:
-        """
-        Return XDG_PICTURES_DIR/(configured folder from preferences), or the XDG_PICTURES_DIR itself
-        if no subfolder is configured. Returns None if the base pictures directory doesn't exist.
-        """
         xdg_pictures = GLib.get_user_special_dir(GLib.USER_DIRECTORY_PICTURES)
-        if not xdg_pictures:
-            return None
+        screenshot_folder = Settings().screenshot_folder
 
-        configured_subfolder = Settings().screenshot_subfolder
-        if not configured_subfolder:
-            path = Path(xdg_pictures)
+        if screenshot_folder:
+            path = Path(screenshot_folder)
             return path if path.exists() else None
 
-        path = Path(xdg_pictures) / configured_subfolder
-        return path if path.exists() else None
+
+        if xdg_pictures:
+            path = Path(xdg_pictures) / 'Screenshots'
+            return path if path.exists() else None
+        return None
+
 
 
 class RoundedImage(Gtk.Widget):

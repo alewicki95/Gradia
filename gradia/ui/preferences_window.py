@@ -29,43 +29,12 @@ from gradia.ui.provider_selection_window import ProviderListPage
 
 logger = Logger()
 
-class ScreenshotFolderFinder:
-
-    def __init__(self):
-        self.pictures_dir = Path(GLib.get_user_special_dir(GLib.USER_DIRECTORY_PICTURES))
-
-    def get_screenshot_folders(self) -> list[tuple[str, str]]:
-        folders = [(_("Root"), "")]
-
-        if not self.pictures_dir.exists():
-            return folders
-
-        try:
-            subdirs = [d for d in self.pictures_dir.iterdir()
-                       if d.is_dir() and not d.name.startswith('.')]
-
-            subdirs.sort(key=lambda d: d.name.lower())
-            for subdir in subdirs:
-                folders.append((subdir.name, subdir.name))
-
-        except PermissionError:
-            logger.warning(f"Permission denied accessing {self.pictures_dir}")
-        except Exception as e:
-            logger.warning(f"Error reading screenshot folders: {e}")
-
-        return folders
-
-    def get_current_folder(self):
-        return Settings().screenshot_subfolder
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/preferences_window.ui")
 class PreferencesWindow(Adw.PreferencesDialog):
     __gtype_name__ = 'GradiaPreferencesWindow'
+
     help_button: Gtk.Button = Gtk.Template.Child()
-
-
-    folder_expander: Adw.ExpanderRow = Gtk.Template.Child()
-    folder_label: Gtk.Label = Gtk.Template.Child()
     save_format_group: Adw.PreferencesGroup = Gtk.Template.Child()
     delete_screenshot_switch: Adw.SwitchRow = Gtk.Template.Child()
     overwrite_screenshot_switch: Adw.SwitchRow = Gtk.Template.Child()
@@ -73,7 +42,7 @@ class PreferencesWindow(Adw.PreferencesDialog):
     save_format_combo: Adw.ComboRow = Gtk.Template.Child()
     provider_name: Gtk.Label = Gtk.Template.Child()
     exiting_combo: Adw.ComboRow = Gtk.Template.Child()
-
+    folder_label: Gtk.Label = Gtk.Template.Child()
 
     def __init__(self, parent_window: Adw.ApplicationWindow, **kwargs):
         super().__init__(**kwargs)
@@ -81,10 +50,6 @@ class PreferencesWindow(Adw.PreferencesDialog):
         self.parent_window = parent_window
 
         self.settings = Settings()
-        self.folder_finder = ScreenshotFolderFinder()
-        self.available_folders = self.folder_finder.get_screenshot_folders()
-        self.current_selected_folder = self.folder_finder.get_current_folder()
-        self.folder_rows = []
 
         self._setup_widgets()
         self._connect_signals()
@@ -98,12 +63,11 @@ class PreferencesWindow(Adw.PreferencesDialog):
         self.add_controller(shortcut_controller)
 
     def _setup_widgets(self):
-        self._update_expander_title()
-        self._create_folder_rows()
         self._setup_save_format_combo()
         self._setup_exiting_combo()
         self._setup_provider_display()
         self._bind_settings()
+        self._setup_folder_label()
 
     def _setup_provider_display(self):
         provider_name = self.settings.provider_name
@@ -112,38 +76,11 @@ class PreferencesWindow(Adw.PreferencesDialog):
         else:
             self.provider_name.set_text(_("None Selected"))
 
-    def _update_expander_title(self):
-        if self.current_selected_folder:
-            display_name = next(
-                (name for name, folder in self.available_folders if folder == self.current_selected_folder),
-                self.current_selected_folder
-            )
-            self.folder_label.set_text(display_name)
-        else:
-            self.folder_label.set_text(_("Root"))
-
-    def _create_folder_rows(self):
-        for row in self.folder_rows:
-            self.folder_expander.remove(row)
-        self.folder_rows.clear()
-
-        for display_name, folder_name in self.available_folders:
-            row = Adw.ActionRow()
-            row.set_title(display_name)
-            row.add_css_class("monospace")
-
-            checkmark = Gtk.Image()
-            checkmark.set_from_icon_name("object-select-symbolic")
-            checkmark.set_visible(folder_name == self.current_selected_folder)
-            row.add_suffix(checkmark)
-
-            row.folder_name = folder_name
-            row.checkmark = checkmark
-            row.set_activatable(True)
-            row.connect("activated", self._on_folder_row_activated)
-
-            self.folder_expander.add_row(row)
-            self.folder_rows.append(row)
+    def _setup_folder_label(self):
+       path = self.settings.screenshot_folder
+       if path is None:
+           path = "Screenshots"
+       self.folder_label.set_text(os.path.basename(path))
 
     def _setup_save_format_combo(self):
         current_format = self.settings.export_format
@@ -206,26 +143,6 @@ class PreferencesWindow(Adw.PreferencesDialog):
     def _on_help_button_clicked(self, button: Gtk.Button) -> None:
         self.push_subpage(ScreenshotGuidePage(self))
 
-    def _on_folder_row_activated(self, row: Adw.ActionRow) -> None:
-        folder_name = row.folder_name
-        self._update_folder_selection(folder_name)
-
-        self.folder_expander.set_expanded(False)
-
-        window = self.parent_window
-        action = window.lookup_action("set-screenshot-folder") if window else None
-        if action:
-            action.activate(GLib.Variant('s', folder_name))
-
-    def _update_folder_selection(self, selected_folder: str) -> None:
-        self.current_selected_folder = selected_folder
-        self.settings.screenshot_subfolder = selected_folder
-
-        for row in self.folder_rows:
-            is_selected = row.folder_name == selected_folder
-            row.checkmark.set_visible(is_selected)
-        self._update_expander_title()
-
     def _copy_to_clipboard(self, text: str) -> None:
         clipboard = self.get_clipboard()
         clipboard.set(text)
@@ -236,9 +153,6 @@ class PreferencesWindow(Adw.PreferencesDialog):
         toast.set_timeout(2)
         if hasattr(self.parent_window, 'add_toast'):
             self.parent_window.add_toast(toast)
-
-    def set_current_subfolder(self, subfolder: str) -> None:
-        self._update_folder_selection(subfolder)
 
     def _bind_settings(self):
         self.settings.bind_switch(self.delete_screenshot_switch,"trash-screenshots-on-close")
@@ -253,6 +167,32 @@ class PreferencesWindow(Adw.PreferencesDialog):
             self.settings.custom_export_command = command
             self.parent_window.update_command_ready()
         self.push_subpage(ProviderListPage(preferences_dialog=self,on_provider_selected=handle_selection))
+
+    @Gtk.Template.Callback()
+    def on_folder_row_clicked(self, row: Adw.ActionRow) -> None:
+        file_dialog = Gtk.FileDialog()
+        def on_folder_selected(dialog, result):
+            try:
+                folder = dialog.select_folder_finish(result)
+                if folder:
+                    folder_path = folder.get_path()
+                    print(f"Selected folder: {folder_path}")
+                    self.folder_label.set_text(os.path.basename(folder_path))
+                    self.settings.screenshot_folder = folder_path
+
+                    window = self.parent_window
+                    action = window.lookup_action("set-screenshot-folder") if window else None
+                    if action:
+                        action.activate(GLib.Variant('s', folder_path))
+
+            except GLib.Error:
+                pass
+
+        file_dialog.select_folder(
+            parent=self.get_root(),
+            cancellable=None,
+            callback=on_folder_selected
+        )
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/preferences/screenshot_guide_page.ui")
 class ScreenshotGuidePage(Adw.NavigationPage):

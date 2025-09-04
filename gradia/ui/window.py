@@ -164,7 +164,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
 
         self.create_action("preferences", self._on_preferences_activated, ['<primary>comma'])
 
-        self.create_action("set-screenshot-folder",  lambda action, param: self.set_screenshot_subfolder(param.get_string()), vt="s")
+        self.create_action("set-screenshot-folder",  lambda action, param: self.set_screenshot_folder(param.get_string()), vt="s")
 
 
     """
@@ -456,8 +456,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         preferences_window = PreferencesWindow(self)
         preferences_window.present(self)
 
-    def set_screenshot_subfolder(self, subfolder) -> None:
-        self.settings.screenshot_subfolder = subfolder
+    def set_screenshot_folder(self, subfolder) -> None:
         self.welcome_content.refresh_recent_picker()
 
     def _run_custom_command(self) -> None:

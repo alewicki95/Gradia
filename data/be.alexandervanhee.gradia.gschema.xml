@@ -52,9 +52,9 @@
       <summary>Serialized state of the image background</summary>
     </key>
 
-   <key name="screenshot-subfolder" type="s">
-      <default>'Screenshots'</default>
-      <summary>Screenshot subdirectory</summary>
+   <key name="screenshot-folder" type="s">
+      <default>''</default>
+      <summary>Folder to use for recent picker</summary>
     </key>
     <key name="export-format" type="s">
       <default>'png'</default>

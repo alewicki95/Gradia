@@ -63,12 +63,13 @@ class Settings:
 
 
     @property
-    def screenshot_subfolder(self) -> str:
-        return self._settings.get_string("screenshot-subfolder")
+    def screenshot_folder(self) -> str:
+        value = self._settings.get_string("screenshot-folder")
+        return None if value == "" else value
 
-    @screenshot_subfolder.setter
-    def screenshot_subfolder(self, value: str) -> None:
-        self._settings.set_string("screenshot-subfolder", value)
+    @screenshot_folder.setter
+    def screenshot_folder(self, value: str) -> None:
+        self._settings.set_string("screenshot-folder", value)
 
     @property
     def export_format(self) -> str:
