@@ -37,12 +37,13 @@ class AngleSelector(Gtk.Widget):
     def __init__(self):
         super().__init__(css_name='angle-selector')
         self._outer_radius = 40
-        self._inner_radius = 20
+        self._inner_radius = 37
         self._handle_size = 20
         self._handle_radius = 10
         self._dragging = False
         self._snap_threshold = 15
         self._exit_threshold = 25
+
         self.set_size_request(100, 100)
         self.set_can_focus(True)
         self._setup_gestures()
@@ -70,8 +71,8 @@ class AngleSelector(Gtk.Widget):
         cx, cy = self._get_center()
         adjusted_angle = self.angle - 90
         rad = math.radians(adjusted_angle)
-        x = cx + self._outer_radius * math.cos(rad)
-        y = cy + self._outer_radius * math.sin(rad)
+        x = cx + self._inner_radius * math.cos(rad)
+        y = cy + self._inner_radius * math.sin(rad)
         return x, y
 
     def _point_to_angle(self, x, y):

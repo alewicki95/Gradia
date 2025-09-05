@@ -69,8 +69,7 @@ class GradientColorButton(Gtk.Box):
 
         self._color_dialog: Optional[Gtk.ColorDialog] = None
         self.editor: Optional["GradientEditor"] = None
-        self._click_count = 0
-        self._last_click_time = 0
+        self._has_moved = False
 
         self.connect("notify::color", self._on_color_changed)
         self.connect("notify::step", self._on_step_changed)
@@ -230,10 +229,8 @@ class GradientEditor(Gtk.Box):
 
         button.connect("notify::color", self._on_color_changed)
 
-        click_controller = Gtk.GestureClick()
-        button.add_controller(click_controller)
-
         drag_controller = Gtk.GestureDrag()
+        drag_controller.set_touch_only(False)
         drag_controller.connect("drag-begin", self._on_drag_begin)
         drag_controller.connect("drag-update", self._on_drag_update)
         drag_controller.connect("drag-end", self._on_drag_end)
@@ -260,20 +257,21 @@ class GradientEditor(Gtk.Box):
 
     def _on_drag_begin(self, controller, start_x, start_y):
         button = controller.get_widget()
-        button._is_dragging = True
+        button._has_moved = False
         button.set_selected(True)
         current_pos = self.button_container.get_child_position(button)
         container_pos = self._get_container_pos(button)
         self.drag_offset = (current_pos.x - container_pos[0], current_pos.y - container_pos[1])
-
-        self.drag_start_pos = self.button_container.get_child_position(button)
-        self.drag_start_time = time.time()
 
     def _on_drag_update(self, controller, offset_x, offset_y):
         if self.drag_offset is None:
             return
 
         button = controller.get_widget()
+
+        drag_distance = math.sqrt(offset_x * offset_x + offset_y * offset_y)
+        if drag_distance > 1:
+            button._has_moved = True
 
         container_width = self.gradient_background.get_allocated_width()
         button_width = button.get_allocated_width()
@@ -304,31 +302,13 @@ class GradientEditor(Gtk.Box):
     def _on_drag_end(self, controller, offset_x, offset_y):
         button = controller.get_widget()
 
-        GLib.timeout_add(50, lambda: setattr(button, '_is_dragging', False))
-        self.drag_offset = None
-        self._update_gradient_css()
-
-        self.drag_end_pos = self.button_container.get_child_position(button)
-        start_x, start_y = self.drag_start_pos
-        end_x, end_y = self.drag_end_pos
-
-        distance = math.hypot(end_x - start_x, end_y - start_y)
-        drag_time = time.time() - self.drag_start_time
-
-        if distance < 5 and drag_time < 0.2:
-            current_time = time.time()
-            if current_time - button._last_click_time < 0.5:
-                button._click_count += 1
-            else:
-                button._click_count = 1
-
-            button._last_click_time = current_time
-
-            if button._click_count == 2:
-                button.open_color_picker(on_select = lambda : self._on_gradient_changed() )
-                button._click_count = 0
+        if not button._has_moved:
+            button.open_color_picker(on_select=lambda: self._on_gradient_changed())
         else:
             self._on_gradient_changed()
+
+        self.drag_offset = None
+        self._update_gradient_css()
 
     def _check_overlap_at_step(self, moving_button: GradientColorButton, step: float) -> bool:
         container_width = self.gradient_background.get_allocated_width()
