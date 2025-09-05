@@ -286,7 +286,6 @@ class FakeWindowManager:
         frame.add_css_class("window-border")
         frame.add_css_class("card")
 
-
         self.fake_window_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.fake_window_container.get_style_context().add_class("adw-window")
 
