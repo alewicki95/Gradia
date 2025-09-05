@@ -176,7 +176,7 @@ class PreferencesWindow(Adw.PreferencesDialog):
                 folder = dialog.select_folder_finish(result)
                 if folder:
                     folder_path = folder.get_path()
-                    print(f"Selected folder: {folder_path}")
+                    logger.info(f"Selected folder for home page: {folder_path}")
                     self.folder_label.set_text(os.path.basename(folder_path))
                     self.settings.screenshot_folder = folder_path
 

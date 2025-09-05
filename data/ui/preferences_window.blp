@@ -11,7 +11,8 @@ template $GradiaPreferencesWindow : Adw.PreferencesDialog {
       title: _("Screenshots Folder");
 
       Adw.ActionRow {
-        title: _("Recent Folder");
+        title: _("Recent Directory");
+        subtitle: _("Used for home screen");
         activatable: true;
         activated => $on_folder_row_clicked();
 

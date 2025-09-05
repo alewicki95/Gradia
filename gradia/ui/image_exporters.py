@@ -180,7 +180,7 @@ class FileDialogExporter(BaseImageExporter):
                 try:
                     self._save_image(save_path, format_type)
                     self.window.show_close_confirmation = False
-                    self.window._show_notification(_("Image saved successfully"))
+                    self.window._show_notification(_("Image Saved"))
                 except Exception as e:
                     self.window._show_notification(_("Export Failed"))
                     logger.error(f"Failed to save image: {e}")
@@ -268,7 +268,7 @@ class ClipboardExporter(BaseImageExporter):
                     copy_pixbuf_to_clipboard(pixbuf)
                     if not silent:
                         self.window.show_close_confirmation = False
-                        self.window._show_notification(_("Image copied to clipboard"))
+                        self.window._show_notification(_("Image Copied"))
 
                 except Exception as e:
                     self.window._show_notification(_("Failed to copy image to clipboard"))
