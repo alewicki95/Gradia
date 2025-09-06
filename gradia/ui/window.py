@@ -31,7 +31,8 @@ from gradia.graphics.solid import SolidBackground
 from gradia.overlay.drawing_actions import DrawingMode
 from gradia.ui.background_selector import BackgroundSelector
 from gradia.ui.image_exporters import ExportManager
-from gradia.ui.image_loaders import ImportManager, LoadedImage
+from gradia.ui.image_loaders import ImportManager
+from gradia.graphics.loaded_image import LoadedImage, ImageOrigin
 from gradia.ui.image_sidebar import ImageSidebar, ImageOptions
 from gradia.ui.image_stack import ImageStack
 from gradia.ui.ui_parts import *
@@ -344,10 +345,9 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.image = image
         self.drawing_overlay.clear_drawing()
         self._update_sidebar_file_info(image)
-        self.show_close_confirmation = True
-        self.toolbar_view.set_top_bar_style(Adw.ToolbarStyle.RAISED)
-        self.image_stack.get_style_context().add_class("view")
-        self._show_loading_state()
+
+        if self.welcome_content:
+            self.welcome_content.recent_picker.set_visible(False)
 
         def after_process():
             if copy_after_processing:
@@ -358,10 +358,12 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.process_image(callback=after_process)
 
 
-    def _show_loading_state(self) -> None:
+    def show_loading_state(self) -> None:
         self.main_stack.set_visible_child_name("main")
-        if self.welcome_content:
-            self.welcome_content.recent_picker.set_visible(False)
+        self.show_close_confirmation = True
+        self.image_stack.get_style_context().add_class("view")
+        self.sidebar.set_visible(True)
+        self.toolbar_view.set_top_bar_style(Adw.ToolbarStyle.RAISED)
         self.image_stack.set_visible_child_name(self.PAGE_LOADING)
 
     def _hide_loading_state(self) -> None:
@@ -370,7 +372,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     def _update_sidebar_file_info(self, image: LoadedImage) -> None:
         self.sidebar.filename_row.set_subtitle(image.get_proper_name())
         self.sidebar.location_row.set_subtitle(image.get_proper_folder())
-        self.sidebar.set_visible(True)
 
     def _trigger_processing(self) -> None:
         if self.image:
