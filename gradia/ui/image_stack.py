@@ -135,11 +135,12 @@ class ImageStack(Adw.Bin):
                 return True
         return False
 
-    def reset_crop_selection(self) -> None:
+    def reset_crop_selection(self, silent=False) -> None:
         self.crop_overlay.set_crop_rectangle(0.0, 0.0, 1, 1)
         self.crop_overlay.aspect_ratio = 0
         self.crop_has_been_enabled = False
-        self.on_toggle_crop()
+        if not silent:
+            self.on_toggle_crop()
 
     def on_toggle_crop(self) -> None:
         self.crop_enabled = not self.crop_enabled

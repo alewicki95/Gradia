@@ -160,7 +160,6 @@ class GradiaMainWindow(Adw.ApplicationWindow):
         self.create_action("clear", lambda *_: self.drawing_overlay.clear_drawing())
         self.create_action("draw-mode", lambda action, param: self.drawing_overlay.set_drawing_mode(DrawingMode(param.get_string())), vt="s")
 
-
         self.create_action("delete-screenshots", lambda *_: self._create_delete_screenshots_dialog(), enabled=False)
 
         self.create_action("preferences", self._on_preferences_activated, ['<primary>comma'])
@@ -344,6 +343,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     def set_image(self, image: LoadedImage, copy_after_processing=False):
         self.image = image
         self.drawing_overlay.clear_drawing()
+        self.image_bin.reset_crop_selection(silent=True)
         self._update_sidebar_file_info(image)
 
         if self.welcome_content:
