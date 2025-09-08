@@ -37,6 +37,9 @@
     <file>images/preset4.webp</file>
     <file>images/preset5.png</file>
     <file>images/preset6.webp</file>
+    <file>images/preset7.webp</file>
+    <file>images/preset8.webp</file>
+    <file>images/preset9.webp</file>
   </gresource>
   <gresource prefix="/be/alexandervanhee/gradia">
     <file preprocess="xml-stripblanks">icons/scalable/actions/color-picker-symbolic.svg</file>

@@ -64,6 +64,7 @@ class AboutDialog:
             [
                 "GNOME backgrounds https://gitlab.gnome.org/GNOME/gnome-backgrounds",
                 "Fruit Basket https://unsplash.com/photos/background-pattern-oWr5S1bO2ak",
+                "Codioful https://unsplash.com/@codioful",
                 None
             ]
         )

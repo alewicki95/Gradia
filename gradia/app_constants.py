@@ -58,6 +58,9 @@ PRESET_IMAGES = [
     "/be/alexandervanhee/gradia/images/preset4.webp",
     "/be/alexandervanhee/gradia/images/preset5.png",
     "/be/alexandervanhee/gradia/images/preset6.webp",
+    "/be/alexandervanhee/gradia/images/preset7.webp",
+    "/be/alexandervanhee/gradia/images/preset8.webp",
+    "/be/alexandervanhee/gradia/images/preset9.webp",
 ]
 
 SUPPORTED_EXPORT_FORMATS = {
