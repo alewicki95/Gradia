@@ -141,6 +141,7 @@ class QuickColorPicker(Gtk.Box, ColorPickerMixin):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.set_orientation(Gtk.Orientation.HORIZONTAL)
+        self.set_halign(Gtk.Align.CENTER)
         self.set_spacing(4)
         self._selected_button = None
         self._custom_colors = None

@@ -172,8 +172,9 @@ class GradientEditor(Gtk.Box):
     def __init__(self, **kwargs):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, **kwargs)
 
-        self.set_hexpand(True)
-        self.set_size_request(-1, 34)
+        self.set_hexpand(False)
+        self.set_halign(Gtk.Align.CENTER)
+        self.set_size_request(248, 34)
         self.add_css_class("gradient-editor")
 
         self.color_buttons: List[GradientColorButton] = []
@@ -185,8 +186,8 @@ class GradientEditor(Gtk.Box):
         self.append(self.overlay)
 
         self.gradient_background = Gtk.Box()
-        self.gradient_background.set_hexpand(True)
-        self.gradient_background.set_size_request(-1, 34)
+        self.gradient_background.set_hexpand(False)
+        self.gradient_background.set_size_request(248, 34)
         self.gradient_background.add_css_class("gradient-background")
 
         self.gradient_background.connect("notify::width", self._on_gradient_background_size_changed)
@@ -198,8 +199,8 @@ class GradientEditor(Gtk.Box):
         )
 
         self.button_container = Gtk.Fixed(overflow=Gtk.Overflow.VISIBLE)
-        self.button_container.set_hexpand(True)
-        self.button_container.set_size_request(-1, 36)
+        self.button_container.set_hexpand(False)
+        self.button_container.set_size_request(248, 36)
 
         self.overlay.set_child(self.gradient_background)
         self.overlay.add_overlay(self.button_container)
