@@ -513,7 +513,7 @@ class HighlighterAction(StrokeAction):
         coords = [image_to_widget_coords(x, y) for x, y in self.stroke]
         cr.set_operator(cairo.Operator.MULTIPLY)
         cr.set_source_rgba(*self.color)
-        cr.set_line_width(self.pen_size * scale)
+        cr.set_line_width(self.pen_size * scale * 2)
         cr.set_line_cap(cairo.LineCap.BUTT)
         cr.move_to(*coords[0])
         for point in coords[1:]:
@@ -637,3 +637,4 @@ class NumberStampAction(DrawingAction):
 
     def translate(self, dx: int, dy: int):
         self.position = (self.position[0] + dx, self.position[1] + dy)
+
