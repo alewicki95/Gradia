@@ -185,30 +185,35 @@ class ArrowAction(DrawingAction):
         start_x, start_y = image_to_widget_coords(*self.start)
         end_x, end_y = image_to_widget_coords(*self.end)
         distance = math.hypot(end_x - start_x, end_y - start_y)
-
         if distance < self.MIN_DISTANCE_THRESHOLD:
             return
 
-        cr.set_source_rgba(*self.color)
         angle = math.atan2(end_y - start_y, end_x - start_x)
-        head_len = min(self.arrow_head_size * scale, distance * self.MAX_HEAD_LENGTH_RATIO)
-        head_width = head_len * self.HEAD_WIDTH_RATIO
-        shaft_width = head_width * self.SHAFT_WIDTH_RATIO
-
         cos_a = math.cos(angle)
         sin_a = math.sin(angle)
+
+        start_offset = self.width * scale / 2
+        adjusted_start_x = start_x + start_offset * cos_a
+        adjusted_start_y = start_y + start_offset * sin_a
+
+        adjusted_distance = math.hypot(end_x - adjusted_start_x, end_y - adjusted_start_y)
+        if adjusted_distance < self.MIN_DISTANCE_THRESHOLD:
+            return
+
+        cr.set_source_rgba(*self.color)
+        head_len = min(self.arrow_head_size * scale, adjusted_distance * self.MAX_HEAD_LENGTH_RATIO)
+        head_width = head_len * self.HEAD_WIDTH_RATIO
+        shaft_width = head_width * self.SHAFT_WIDTH_RATIO
         perp_cos = -sin_a
         perp_sin = cos_a
-
         shaft_end_x = end_x - head_len * cos_a
         shaft_end_y = end_y - head_len * sin_a
-
         shaft_start_half = shaft_width * self.SHAFT_START_WIDTH_RATIO
         shaft_end_half = shaft_width
         head_half = head_width
 
-        cr.move_to(start_x + shaft_start_half * perp_cos, start_y + shaft_start_half * perp_sin)
-        cr.arc(start_x, start_y, shaft_start_half, angle + math.pi/2, angle - math.pi/2)
+        cr.move_to(adjusted_start_x + shaft_start_half * perp_cos, adjusted_start_y + shaft_start_half * perp_sin)
+        cr.arc(adjusted_start_x, adjusted_start_y, shaft_start_half, angle + math.pi/2, angle - math.pi/2)
         cr.line_to(shaft_end_x - shaft_end_half * perp_cos, shaft_end_y - shaft_end_half * perp_sin)
         cr.line_to(shaft_end_x - head_half * perp_cos, shaft_end_y - head_half * perp_sin)
         cr.line_to(end_x, end_y)
@@ -221,19 +226,10 @@ class ArrowAction(DrawingAction):
         distance = math.hypot(self.end[0] - self.start[0], self.end[1] - self.start[1])
         if distance < self.MIN_DISTANCE_THRESHOLD:
             return (self.start[0], self.start[1], self.start[0], self.start[1])
-
-        head_len = min(self.arrow_head_size, distance * self.MAX_HEAD_LENGTH_RATIO)
-        head_width = head_len * self.HEAD_WIDTH_RATIO
-        shaft_width = head_width * self.SHAFT_WIDTH_RATIO
-        shaft_start_width = shaft_width * self.SHAFT_START_WIDTH_RATIO
-
-        padding = max(head_width, shaft_start_width) // 2 + 2
-
-        min_x = min(self.start[0], self.end[0]) - padding
-        max_x = max(self.start[0], self.end[0]) + padding
-        min_y = min(self.start[1], self.end[1]) - padding
-        max_y = max(self.start[1], self.end[1]) + padding
-
+        min_x = min(self.start[0], self.end[0])
+        max_x = max(self.start[0], self.end[0])
+        min_y = min(self.start[1], self.end[1])
+        max_y = max(self.start[1], self.end[1])
         return (min_x, min_y, max_x, max_y)
 
     def translate(self, dx: int, dy: int):
@@ -425,113 +421,115 @@ class LineAction(ArrowAction):
         cr.stroke()
 
     def get_bounds(self) -> tuple[int, int, int, int]:
-        padding = self.width // 2 + 2
-        min_x = min(self.start[0], self.end[0]) - padding
-        max_x = max(self.start[0], self.end[0]) + padding
-        min_y = min(self.start[1], self.end[1]) - padding
-        max_y = max(self.start[1], self.end[1]) + padding
+        min_x = min(self.start[0], self.end[0])
+        max_x = max(self.start[0], self.end[0])
+        min_y = min(self.start[1], self.end[1])
+        max_y = max(self.start[1], self.end[1])
         return (min_x, min_y, max_x, max_y)
 
 class RectAction(DrawingAction):
-   def __init__(self, start: tuple[int, int], end: tuple[int, int], shift: bool, options):
-       self.start = start
-       self.end = end
-       self.shift = shift
-       self.color = options.primary_color
-       self.width = options.size
-       self.fill_color = options.fill_color
+    def __init__(self, start: tuple[int, int], end: tuple[int, int], shift: bool, options):
+        self.start = start
+        self.end = end
+        self.shift = shift
+        self.color = options.primary_color
+        self.width = options.size
+        self.fill_color = options.fill_color
 
-   def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
-       x1_widget, y1_widget = image_to_widget_coords(*self.start)
-       x2_widget, y2_widget = image_to_widget_coords(*self.end)
+    def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
+        x1_widget, y1_widget = image_to_widget_coords(*self.start)
+        x2_widget, y2_widget = image_to_widget_coords(*self.end)
 
-       if self.shift:
-           size = max(abs(x2_widget - x1_widget), abs(y2_widget - y1_widget))
-           if x2_widget < x1_widget:
-               x2_widget = x1_widget - size
-           else:
-               x2_widget = x1_widget + size
-           if y2_widget < y1_widget:
-               y2_widget = y1_widget - size
-           else:
-               y2_widget = y1_widget + size
+        if self.shift:
+            size = max(abs(x2_widget - x1_widget), abs(y2_widget - y1_widget))
+            if x2_widget < x1_widget:
+                x2_widget = x1_widget - size
+            else:
+                x2_widget = x1_widget + size
+            if y2_widget < y1_widget:
+                y2_widget = y1_widget - size
+            else:
+                y2_widget = y1_widget + size
 
-       x, y = min(x1_widget, x2_widget), min(y1_widget, y2_widget)
-       w, h = abs(x2_widget - x1_widget), abs(y2_widget - y1_widget)
+        stroke_offset = (self.width * scale) / 2
+        x = min(x1_widget, x2_widget) + stroke_offset
+        y = min(y1_widget, y2_widget) + stroke_offset
+        w = abs(x2_widget - x1_widget) - (self.width * scale)
+        h = abs(y2_widget - y1_widget) - (self.width * scale)
 
-       if self.fill_color:
-           cr.set_source_rgba(*self.fill_color)
-           cr.rectangle(x, y, w, h)
-           cr.fill()
-       cr.set_source_rgba(*self.color)
-       cr.set_line_width(self.width * scale)
-       cr.rectangle(x, y, w, h)
-       cr.stroke()
+        if w > 0 and h > 0:
+            if self.fill_color:
+                cr.set_source_rgba(*self.fill_color)
+                cr.rectangle(x, y, w, h)
+                cr.fill()
+            cr.set_source_rgba(*self.color)
+            cr.set_line_width(self.width * scale)
+            cr.rectangle(x, y, w, h)
+            cr.stroke()
 
-   def get_bounds(self) -> tuple[int, int, int, int]:
-       if self.shift:
-           dx = abs(self.end[0] - self.start[0])
-           dy = abs(self.end[1] - self.start[1])
-           size = max(dx, dy)
-           if self.end[0] < self.start[0]:
-               end_x = self.start[0] - size
-           else:
-               end_x = self.start[0] + size
-           if self.end[1] < self.start[1]:
-               end_y = self.start[1] - size
-           else:
-               end_y = self.start[1] + size
-           min_x = min(self.start[0], end_x)
-           max_x = max(self.start[0], end_x)
-           min_y = min(self.start[1], end_y)
-           max_y = max(self.start[1], end_y)
-       else:
-           min_x = min(self.start[0], self.end[0])
-           max_x = max(self.start[0], self.end[0])
-           min_y = min(self.start[1], self.end[1])
-           max_y = max(self.start[1], self.end[1])
+    def get_bounds(self) -> tuple[int, int, int, int]:
+        if self.shift:
+            dx = abs(self.end[0] - self.start[0])
+            dy = abs(self.end[1] - self.start[1])
+            size = max(dx, dy)
+            if self.end[0] < self.start[0]:
+                end_x = self.start[0] - size
+            else:
+                end_x = self.start[0] + size
+            if self.end[1] < self.start[1]:
+                end_y = self.start[1] - size
+            else:
+                end_y = self.start[1] + size
+            min_x = min(self.start[0], end_x)
+            max_x = max(self.start[0], end_x)
+            min_y = min(self.start[1], end_y)
+            max_y = max(self.start[1], end_y)
+        else:
+            min_x = min(self.start[0], self.end[0])
+            max_x = max(self.start[0], self.end[0])
+            min_y = min(self.start[1], self.end[1])
+            max_y = max(self.start[1], self.end[1])
 
-       padding = self.width // 2 + 1
-       return (min_x - padding, min_y - padding, max_x + padding, max_y + padding)
+        return (min_x, min_y, max_x, max_y)
 
-   def translate(self, dx: int, dy: int):
-       self.start = (self.start[0] + dx, self.start[1] + dy)
-       self.end = (self.end[0] + dx, self.end[1] + dy)
+    def translate(self, dx: int, dy: int):
+        self.start = (self.start[0] + dx, self.start[1] + dy)
+        self.end = (self.end[0] + dx, self.end[1] + dy)
 
 class CircleAction(RectAction):
-   def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
-       x1_widget, y1_widget = image_to_widget_coords(*self.start)
-       x2_widget, y2_widget = image_to_widget_coords(*self.end)
+    def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
+        x1_widget, y1_widget = image_to_widget_coords(*self.start)
+        x2_widget, y2_widget = image_to_widget_coords(*self.end)
 
-       if self.shift:
-           size = max(abs(x2_widget - x1_widget), abs(y2_widget - y1_widget))
-           if x2_widget < x1_widget:
-               x2_widget = x1_widget - size
-           else:
-               x2_widget = x1_widget + size
-           if y2_widget < y1_widget:
-               y2_widget = y1_widget - size
-           else:
-               y2_widget = y1_widget + size
+        if self.shift:
+            size = max(abs(x2_widget - x1_widget), abs(y2_widget - y1_widget))
+            if x2_widget < x1_widget:
+                x2_widget = x1_widget - size
+            else:
+                x2_widget = x1_widget + size
+            if y2_widget < y1_widget:
+                y2_widget = y1_widget - size
+            else:
+                y2_widget = y1_widget + size
 
-       cx, cy = (x1_widget + x2_widget) / 2, (y1_widget + y2_widget) / 2
-       rx, ry = abs(x2_widget - x1_widget) / 2, abs(y2_widget - y1_widget) / 2
+        cx, cy = (x1_widget + x2_widget) / 2, (y1_widget + y2_widget) / 2
+        stroke_offset = (self.width * scale) / 2
+        rx = (abs(x2_widget - x1_widget) - (self.width * scale)) / 2
+        ry = (abs(y2_widget - y1_widget) - (self.width * scale)) / 2
 
-       if rx < 1e-3 or ry < 1e-3:
-           return
+        if rx > 0 and ry > 0:
+            cr.save()
+            cr.translate(cx, cy)
+            cr.scale(rx, ry)
+            cr.arc(0, 0, 1, 0, 2 * math.pi)
+            cr.restore()
 
-       cr.save()
-       cr.translate(cx, cy)
-       cr.scale(rx, ry)
-       cr.arc(0, 0, 1, 0, 2 * math.pi)
-       cr.restore()
-
-       if self.fill_color:
-           cr.set_source_rgba(*self.fill_color)
-           cr.fill_preserve()
-       cr.set_source_rgba(*self.color)
-       cr.set_line_width(self.width * scale)
-       cr.stroke()
+            if self.fill_color:
+                cr.set_source_rgba(*self.fill_color)
+                cr.fill_preserve()
+            cr.set_source_rgba(*self.color)
+            cr.set_line_width(self.width * scale)
+            cr.stroke()
 
 class HighlighterAction(StrokeAction):
     def __init__(self, stroke: list[tuple[int, int]], options, shift: bool):
