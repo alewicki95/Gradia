@@ -24,7 +24,6 @@ import math
 from gradia.backend.logger import Logger
 from gradia.utils.colors import has_visible_color
 import time
-import random
 import unicodedata
 
 logging = Logger()
@@ -76,15 +75,49 @@ DrawingMode._shortcuts = {
 }
 
 
+class QuadBounds:
+    def __init__(self, p1: tuple[float, float], p2: tuple[float, float], p3: tuple[float, float], p4: tuple[float, float]):
+        self.p1 = p1
+        self.p2 = p2
+        self.p3 = p3
+        self.p4 = p4
+
+    @classmethod
+    def from_rect(cls, min_x: float, min_y: float, max_x: float, max_y: float):
+        return cls(
+            (min_x, min_y),
+            (max_x, min_y),
+            (max_x, max_y),
+            (min_x, max_y)
+        )
+
+    @classmethod
+    def from_start_end(cls, start: tuple[float, float], end: tuple[float, float]):
+        min_x = min(start[0], end[0])
+        max_x = max(start[0], end[0])
+        min_y = min(start[1], end[1])
+        max_y = max(start[1], end[1])
+        return cls.from_rect(min_x, min_y, max_x, max_y)
+
+    def get_points(self) -> list[tuple[float, float]]:
+        return [self.p1, self.p2, self.p3, self.p4]
+
+    def get_bounding_rect(self) -> tuple[float, float, float, float]:
+        points = self.get_points()
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        return min(xs), min(ys), max(xs), max(ys)
+
+
 class DrawingAction:
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
         raise NotImplementedError
 
-    def get_bounds(self) -> tuple[int, int, int, int]:
+    def get_bounds(self) -> QuadBounds:
         raise NotImplementedError
 
     def contains_point(self, x_img: int, y_img: int) -> bool:
-        min_x, min_y, max_x, max_y = self.get_bounds()
+        min_x, min_y, max_x, max_y = self.get_bounds().get_bounding_rect()
         if isinstance(self, (LineAction, ArrowAction)):
             px, py = x_img, y_img
             x1, y1 = self.start
@@ -158,14 +191,14 @@ class StrokeAction(DrawingAction):
             cr.curve_to(x1, y1, x1, y1, mid_x, mid_y)
         cr.line_to(*coords[-1])
 
-    def get_bounds(self) -> tuple[int, int, int, int]:
+    def get_bounds(self) -> QuadBounds:
         if self._bounds is None:
             if not self.stroke:
-                self._bounds = (0, 0, 0, 0)
+                self._bounds = QuadBounds.from_rect(0, 0, 0, 0)
             else:
                 xs, ys = zip(*self.stroke)
                 padding = self.pen_size // 2 + 5
-                self._bounds = (min(xs) - padding, min(ys) - padding, max(xs) + padding, max(ys) + padding)
+                self._bounds = QuadBounds.from_rect(min(xs) - padding, min(ys) - padding, max(xs) + padding, max(ys) + padding)
         return self._bounds
 
     def translate(self, dx: int, dy: int):
@@ -173,11 +206,11 @@ class StrokeAction(DrawingAction):
         self._bounds = None
 
 class ArrowAction(DrawingAction):
-    ARROW_HEAD_SIZE_MULTIPLIER = 4
+    ARROW_HEAD_SIZE_MULTIPLIER = 5
     HEAD_WIDTH_RATIO = 0.6
     SHAFT_WIDTH_RATIO = 0.5
-    SHAFT_START_WIDTH_RATIO = 0.3
-    MAX_HEAD_LENGTH_RATIO = 0.3
+    SHAFT_START_WIDTH_RATIO = 0.35
+    MAX_HEAD_LENGTH_RATIO = 0.6
     MIN_DISTANCE_THRESHOLD = 2
 
     def __init__(self, start: tuple[int, int], end: tuple[int, int], shift: bool, options):
@@ -192,8 +225,8 @@ class ArrowAction(DrawingAction):
         else:
             self.end = end
         self.color = options.primary_color
-        self.arrow_head_size = options.size * self.ARROW_HEAD_SIZE_MULTIPLIER
-        self.width = options.size
+        self.arrow_head_size = options.size * self.ARROW_HEAD_SIZE_MULTIPLIER * 1.75
+        self.width = options.size * 1.75
         self.shadow_color = self._calculate_shadow_color(self.color)
 
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
@@ -252,15 +285,30 @@ class ArrowAction(DrawingAction):
         cr.line_to(shaft_end_x + shaft_end_half * perp_cos, shaft_end_y + shaft_end_half * perp_sin)
         cr.close_path()
 
-    def get_bounds(self) -> tuple[int, int, int, int]:
+    def get_bounds(self) -> QuadBounds:
         distance = math.hypot(self.end[0] - self.start[0], self.end[1] - self.start[1])
         if distance < self.MIN_DISTANCE_THRESHOLD:
-            return (self.start[0], self.start[1], self.start[0], self.start[1])
-        min_x = min(self.start[0], self.end[0])
-        max_x = max(self.start[0], self.end[0])
-        min_y = min(self.start[1], self.end[1])
-        max_y = max(self.start[1], self.end[1])
-        return (min_x , min_y , max_x, max_y)
+            return QuadBounds.from_rect(self.start[0], self.start[1], self.start[0], self.start[1])
+
+        angle = math.atan2(self.end[1] - self.start[1], self.end[0] - self.start[0])
+
+        head_len = min(self.arrow_head_size, distance * self.MAX_HEAD_LENGTH_RATIO)
+        head_width = head_len * self.HEAD_WIDTH_RATIO
+
+        cos_angle = math.cos(angle)
+        sin_angle = math.sin(angle)
+        perp_cos = -sin_angle
+        perp_sin = cos_angle
+
+        start_x, start_y = self.start
+        end_x, end_y = self.end
+
+        p1 = (start_x + head_width * perp_cos, start_y + head_width * perp_sin)
+        p2 = (end_x + head_width * perp_cos, end_y + head_width * perp_sin)
+        p3 = (end_x - head_width * perp_cos, end_y - head_width * perp_sin)
+        p4 = (start_x - head_width * perp_cos, start_y - head_width * perp_sin)
+
+        return QuadBounds(p1, p2, p3, p4)
 
     def translate(self, dx: int, dy: int):
         self.start = (self.start[0] + dx, self.start[1] + dy)
@@ -407,10 +455,10 @@ class TextAction(DrawingAction):
             cr.set_source_rgba(*self.color)
             cr.fill()
 
-    def get_bounds(self) -> tuple[int, int, int, int]:
+    def get_bounds(self) -> QuadBounds:
         if not self.text.strip():
             x, y = self.position
-            return (x, y, x, y)
+            return QuadBounds.from_rect(x, y, x, y)
 
         temp_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)
         temp_cr = cairo.Context(temp_surface)
@@ -437,21 +485,30 @@ class TextAction(DrawingAction):
         top_img = y_img - text_height_img - self.PADDING_Y_IMG - outline_padding
         bottom_img = y_img + self.PADDING_Y_IMG + outline_padding
 
-        return (left_img, top_img, right_img, bottom_img)
+        return QuadBounds.from_rect(left_img, top_img, right_img, bottom_img)
 
     def translate(self, dx: int, dy: int):
         self.position = (self.position[0] + dx, self.position[1] + dy)
 
 class LineAction(ArrowAction):
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
-        start = image_to_widget_coords(*self.start)
-        end = image_to_widget_coords(*self.end)
+        start_x, start_y = image_to_widget_coords(*self.start)
+        end_x, end_y = image_to_widget_coords(*self.end)
+
+        angle = math.atan2(end_y - start_y, end_x - start_x)
+        half_width = (self.width * scale) / 2
+
+        start_x += half_width * math.cos(angle)
+        start_y += half_width * math.sin(angle)
+        end_x -= half_width * math.cos(angle)
+        end_y -= half_width * math.sin(angle)
+
         shadow_offset = 2 * scale
         line_width = self.width * scale
 
         cr.set_line_width(line_width)
-        cr.move_to(*start)
-        cr.line_to(*end)
+        cr.move_to(start_x, start_y)
+        cr.line_to(end_x, end_y)
         path = cr.copy_path()
 
         cr.save()
@@ -465,12 +522,25 @@ class LineAction(ArrowAction):
         cr.set_source_rgba(*self.color)
         cr.stroke()
 
-    def get_bounds(self) -> tuple[int, int, int, int]:
-        min_x = min(self.start[0], self.end[0])
-        max_x = max(self.start[0], self.end[0])
-        min_y = min(self.start[1], self.end[1])
-        max_y = max(self.start[1], self.end[1])
-        return (min_x, min_y, max_x, max_y)
+    def get_bounds(self) -> QuadBounds:
+        angle = math.atan2(self.end[1] - self.start[1], self.end[0] - self.start[0])
+
+        half_width = self.width / 2
+
+        cos_angle = math.cos(angle)
+        sin_angle = math.sin(angle)
+        perp_cos = -sin_angle
+        perp_sin = cos_angle
+
+        start_x, start_y = self.start
+        end_x, end_y = self.end
+
+        p1 = (start_x + half_width * perp_cos, start_y + half_width * perp_sin)
+        p2 = (end_x + half_width * perp_cos, end_y + half_width * perp_sin)
+        p3 = (end_x - half_width * perp_cos, end_y - half_width * perp_sin)
+        p4 = (start_x - half_width * perp_cos, start_y - half_width * perp_sin)
+
+        return QuadBounds(p1, p2, p3, p4)
 
 class RectAction(DrawingAction):
     def __init__(self, start: tuple[int, int], end: tuple[int, int], shift: bool, options):
@@ -512,7 +582,7 @@ class RectAction(DrawingAction):
             cr.rectangle(x, y, w, h)
             cr.stroke()
 
-    def get_bounds(self) -> tuple[int, int, int, int]:
+    def get_bounds(self) -> QuadBounds:
         if self.shift:
             dx = abs(self.end[0] - self.start[0])
             dy = abs(self.end[1] - self.start[1])
@@ -525,17 +595,9 @@ class RectAction(DrawingAction):
                 end_y = self.start[1] - size
             else:
                 end_y = self.start[1] + size
-            min_x = min(self.start[0], end_x)
-            max_x = max(self.start[0], end_x)
-            min_y = min(self.start[1], end_y)
-            max_y = max(self.start[1], end_y)
+            return QuadBounds.from_start_end(self.start, (end_x, end_y))
         else:
-            min_x = min(self.start[0], self.end[0])
-            max_x = max(self.start[0], self.end[0])
-            min_y = min(self.start[1], self.end[1])
-            max_y = max(self.start[1], self.end[1])
-
-        return (min_x, min_y, max_x, max_y)
+            return QuadBounds.from_start_end(self.start, self.end)
 
     def translate(self, dx: int, dy: int):
         self.start = (self.start[0] + dx, self.start[1] + dy)
@@ -602,12 +664,12 @@ class HighlighterAction(StrokeAction):
         cr.set_operator(cairo.Operator.OVER)
         cr.set_line_cap(cairo.LineCap.ROUND)
 
-    def get_bounds(self) -> tuple[int, int, int, int]:
+    def get_bounds(self) -> QuadBounds:
         if not self.stroke:
-            return (0, 0, 0, 0)
+            return QuadBounds.from_rect(0, 0, 0, 0)
         xs, ys = zip(*self.stroke)
         padding = self.pen_size + 3
-        return (min(xs) - padding, min(ys) - padding, max(xs) + padding, max(ys) + padding)
+        return QuadBounds.from_rect(min(xs) - padding, min(ys) - padding, max(xs) + padding, max(ys) + padding)
 
 class CensorAction(RectAction):
     def __init__(self, start: tuple[int, int], end: tuple[int, int], background_pixbuf: GdkPixbuf.Pixbuf, options):
@@ -667,12 +729,8 @@ class CensorAction(RectAction):
         width, height = x_end - x_start, y_end - y_start
         return {'x': x_start, 'y': y_start, 'width': width, 'height': height} if width > 0 and height > 0 else None
 
-    def get_bounds(self) -> tuple[int, int, int, int]:
-        min_x = min(self.start[0], self.end[0])
-        max_x = max(self.start[0], self.end[0])
-        min_y = min(self.start[1], self.end[1])
-        max_y = max(self.start[1], self.end[1])
-        return (min_x, min_y, max_x, max_y)
+    def get_bounds(self) -> QuadBounds:
+        return QuadBounds.from_start_end(self.start, self.end)
 
 class NumberStampAction(DrawingAction):
     def __init__(self, position: tuple[int, int], number: int, options):
@@ -724,11 +782,11 @@ class NumberStampAction(DrawingAction):
         distance_sq = (px_img - x_img)**2 + (py_img - y_img)**2
         return distance_sq <= (self.radius + 5)**2
 
-    def get_bounds(self) -> tuple[int, int, int, int]:
+    def get_bounds(self) -> QuadBounds:
         x_img, y_img = self.position
         outline_padding = 2 if self.outline_color and any(c > 0 for c in self.outline_color) else 0
         total_radius = self.radius + outline_padding + 1
-        return (x_img - total_radius, y_img - total_radius, x_img + total_radius, y_img + total_radius)
+        return QuadBounds.from_rect(x_img - total_radius, y_img - total_radius, x_img + total_radius, y_img + total_radius)
 
     def translate(self, dx: int, dy: int):
         self.position = (self.position[0] + dx, self.position[1] + dy)
