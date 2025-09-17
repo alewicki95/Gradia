@@ -100,6 +100,16 @@ class DrawingAction:
             return dist_sq < (5 + self.width)**2
         return min_x <= x_img <= max_x and min_y <= y_img <= max_y
 
+    def _calculate_shadow_color(self, color):
+        r = color.red
+        g = color.green
+        b = color.blue
+        luminance = 0.299 * r + 0.587 * g + 0.114 * b
+        if luminance < 0.5:
+            return (1.0, 1.0, 1.0, 0.05)
+        else:
+            return (0.0, 0.0, 0.0, 0.3)
+
     def translate(self, dx: int, dy: int):
         raise NotImplementedError
 
@@ -108,55 +118,59 @@ class StrokeAction(DrawingAction):
         self.stroke = stroke
         self.color = options.primary_color
         self.pen_size = options.size
+        self._bounds = None
+        self.shadow_color = self._calculate_shadow_color(self.color)
 
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
         if len(self.stroke) < 2:
             return
-
         coords = [image_to_widget_coords(x, y) for x, y in self.stroke]
+        shadow_offset = 2 * scale
+        line_width = self.pen_size * scale
+        self._build_path(cr, coords)
+        path = cr.copy_path()
+        cr.save()
+        cr.translate(shadow_offset, shadow_offset)
+        cr.append_path(path)
+        cr.set_source_rgba(*self.shadow_color)
+        cr.set_line_width(line_width)
+        cr.stroke()
+        cr.restore()
+        cr.append_path(path)
         cr.set_source_rgba(*self.color)
-        cr.set_line_width(self.pen_size * scale)
-        cr.set_line_cap(cairo.LineCap.ROUND)
-        cr.set_line_join(cairo.LineJoin.ROUND)
-
-        if len(coords) == 2:
-            cr.move_to(*coords[0])
-            cr.line_to(*coords[1])
-        else:
-            cr.move_to(*coords[0])
-
-            if len(coords) > 2:
-                mid_x = (coords[0][0] + coords[1][0]) / 2
-                mid_y = (coords[0][1] + coords[1][1]) / 2
-                cr.line_to(mid_x, mid_y)
-
-            for i in range(1, len(coords) - 1):
-                x0, y0 = coords[i - 1]
-                x1, y1 = coords[i]
-                x2, y2 = coords[i + 1]
-
-                cp1_x = x0 + (x1 - x0) * 0.5
-                cp1_y = y0 + (y1 - y0) * 0.5
-                cp2_x = x1 + (x2 - x1) * 0.5
-                cp2_y = y1 + (y2 - y1) * 0.5
-
-                mid_x = (x1 + x2) / 2
-                mid_y = (y1 + y2) / 2
-
-                cr.curve_to(cp1_x, cp1_y, x1, y1, mid_x, mid_y)
-            cr.line_to(*coords[-1])
-
+        cr.set_line_width(line_width)
         cr.stroke()
 
+    def _build_path(self, cr, coords):
+        cr.set_line_cap(cairo.LineCap.ROUND)
+        cr.set_line_join(cairo.LineJoin.ROUND)
+        if len(coords) <= 2:
+            cr.move_to(*coords[0])
+            if len(coords) == 2:
+                cr.line_to(*coords[1])
+            return
+        cr.move_to(*coords[0])
+        for i in range(1, len(coords) - 1):
+            x1, y1 = coords[i]
+            x2, y2 = coords[i + 1]
+            mid_x = (x1 + x2) * 0.5
+            mid_y = (y1 + y2) * 0.5
+            cr.curve_to(x1, y1, x1, y1, mid_x, mid_y)
+        cr.line_to(*coords[-1])
+
     def get_bounds(self) -> tuple[int, int, int, int]:
-        if not self.stroke:
-            return (0, 0, 0, 0)
-        xs, ys = zip(*self.stroke)
-        padding = self.pen_size // 2 + 3
-        return (min(xs) - padding, min(ys) - padding, max(xs) + padding, max(ys) + padding)
+        if self._bounds is None:
+            if not self.stroke:
+                self._bounds = (0, 0, 0, 0)
+            else:
+                xs, ys = zip(*self.stroke)
+                padding = self.pen_size // 2 + 5
+                self._bounds = (min(xs) - padding, min(ys) - padding, max(xs) + padding, max(ys) + padding)
+        return self._bounds
 
     def translate(self, dx: int, dy: int):
         self.stroke = [(x + dx, y + dy) for x, y in self.stroke]
+        self._bounds = None
 
 class ArrowAction(DrawingAction):
     ARROW_HEAD_SIZE_MULTIPLIER = 4
@@ -180,6 +194,7 @@ class ArrowAction(DrawingAction):
         self.color = options.primary_color
         self.arrow_head_size = options.size * self.ARROW_HEAD_SIZE_MULTIPLIER
         self.width = options.size
+        self.shadow_color = self._calculate_shadow_color(self.color)
 
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
         start_x, start_y = image_to_widget_coords(*self.start)
@@ -187,20 +202,16 @@ class ArrowAction(DrawingAction):
         distance = math.hypot(end_x - start_x, end_y - start_y)
         if distance < self.MIN_DISTANCE_THRESHOLD:
             return
-
         angle = math.atan2(end_y - start_y, end_x - start_x)
         cos_a = math.cos(angle)
         sin_a = math.sin(angle)
-
         start_offset = self.width * scale / 2
         adjusted_start_x = start_x + start_offset * cos_a
         adjusted_start_y = start_y + start_offset * sin_a
-
         adjusted_distance = math.hypot(end_x - adjusted_start_x, end_y - adjusted_start_y)
         if adjusted_distance < self.MIN_DISTANCE_THRESHOLD:
             return
 
-        cr.set_source_rgba(*self.color)
         head_len = min(self.arrow_head_size * scale, adjusted_distance * self.MAX_HEAD_LENGTH_RATIO)
         head_width = head_len * self.HEAD_WIDTH_RATIO
         shaft_width = head_width * self.SHAFT_WIDTH_RATIO
@@ -212,15 +223,34 @@ class ArrowAction(DrawingAction):
         shaft_end_half = shaft_width
         head_half = head_width
 
-        cr.move_to(adjusted_start_x + shaft_start_half * perp_cos, adjusted_start_y + shaft_start_half * perp_sin)
-        cr.arc(adjusted_start_x, adjusted_start_y, shaft_start_half, angle + math.pi/2, angle - math.pi/2)
+        self._build_arrow_path(cr, adjusted_start_x, adjusted_start_y, shaft_end_x, shaft_end_y,
+                               end_x, end_y, angle, shaft_start_half, shaft_end_half,
+                               head_half, perp_cos, perp_sin)
+        path = cr.copy_path()
+
+        shadow_offset = 3 * scale
+        cr.save()
+        cr.translate(shadow_offset, shadow_offset)
+        cr.append_path(path)
+        cr.set_source_rgba(*self.shadow_color)
+        cr.fill()
+        cr.restore()
+
+        cr.append_path(path)
+        cr.set_source_rgba(*self.color)
+        cr.fill()
+
+    def _build_arrow_path(self, cr, start_x, start_y, shaft_end_x, shaft_end_y,
+                         end_x, end_y, angle, shaft_start_half, shaft_end_half,
+                         head_half, perp_cos, perp_sin):
+        cr.move_to(start_x + shaft_start_half * perp_cos, start_y + shaft_start_half * perp_sin)
+        cr.arc(start_x, start_y, shaft_start_half, angle + math.pi/2, angle - math.pi/2)
         cr.line_to(shaft_end_x - shaft_end_half * perp_cos, shaft_end_y - shaft_end_half * perp_sin)
         cr.line_to(shaft_end_x - head_half * perp_cos, shaft_end_y - head_half * perp_sin)
         cr.line_to(end_x, end_y)
         cr.line_to(shaft_end_x + head_half * perp_cos, shaft_end_y + head_half * perp_sin)
         cr.line_to(shaft_end_x + shaft_end_half * perp_cos, shaft_end_y + shaft_end_half * perp_sin)
         cr.close_path()
-        cr.fill()
 
     def get_bounds(self) -> tuple[int, int, int, int]:
         distance = math.hypot(self.end[0] - self.start[0], self.end[1] - self.start[1])
@@ -230,7 +260,7 @@ class ArrowAction(DrawingAction):
         max_x = max(self.start[0], self.end[0])
         min_y = min(self.start[1], self.end[1])
         max_y = max(self.start[1], self.end[1])
-        return (min_x, min_y, max_x, max_y)
+        return (min_x , min_y , max_x, max_y)
 
     def translate(self, dx: int, dy: int):
         self.start = (self.start[0] + dx, self.start[1] + dy)
@@ -414,10 +444,25 @@ class TextAction(DrawingAction):
 
 class LineAction(ArrowAction):
     def draw(self, cr: cairo.Context, image_to_widget_coords: Callable[[int, int], tuple[float, float]], scale: float):
+        start = image_to_widget_coords(*self.start)
+        end = image_to_widget_coords(*self.end)
+        shadow_offset = 2 * scale
+        line_width = self.width * scale
+
+        cr.set_line_width(line_width)
+        cr.move_to(*start)
+        cr.line_to(*end)
+        path = cr.copy_path()
+
+        cr.save()
+        cr.translate(shadow_offset, shadow_offset)
+        cr.append_path(path)
+        cr.set_source_rgba(*self.shadow_color)
+        cr.stroke()
+        cr.restore()
+
+        cr.append_path(path)
         cr.set_source_rgba(*self.color)
-        cr.set_line_width(self.width * scale)
-        cr.move_to(*image_to_widget_coords(*self.start))
-        cr.line_to(*image_to_widget_coords(*self.end))
         cr.stroke()
 
     def get_bounds(self) -> tuple[int, int, int, int]:

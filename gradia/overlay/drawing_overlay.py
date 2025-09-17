@@ -19,14 +19,13 @@ import cairo
 from gi.repository import Adw, Gdk, Gio, Gtk
 from typing import Tuple
 from enum import Enum
-import math
 
 from gradia.overlay.drawing_actions import *
 from gradia.overlay.text_entry_popover import TextEntryPopover
 
 SELECTION_BOX_PADDING = 0
 HANDLE_SIZE = 8
-HANDLE_PADDING = 12
+HANDLE_PADDING = 20
 
 class ResizeHandle(Enum):
     NONE = "none"
@@ -46,10 +45,10 @@ class ResizeHandle(Enum):
             cls.TOP_RIGHT: "ne-resize",
             cls.BOTTOM_LEFT: "sw-resize",
             cls.BOTTOM_RIGHT: "se-resize",
-            cls.TOP: "n-resize",
-            cls.BOTTOM: "s-resize",
-            cls.LEFT: "w-resize",
-            cls.RIGHT: "e-resize",
+            cls.TOP: "ns-resize",
+            cls.BOTTOM: "ns-resize",
+            cls.LEFT: "ew-resize",
+            cls.RIGHT: "ew-resize",
             cls.NONE: "grab"
         }
         return cursor_map.get(handle, "default")
