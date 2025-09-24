@@ -58,10 +58,11 @@ If you'd like Gradia to **open automatically** after taking a screenshot, you ca
 
 ## Screenshots
 
-<p align="center">
-  <img src="screenshots/showcase.png" alt="Showcase screenshot" style="width:45%; margin-right: 5%;">
-  <img src="screenshots/home.png" alt="Home screenshot" style="width:45%;">
-</p>
+<div align="center" style="display: flex; justify-content: center; align-items: center; gap: 5%;">
+  <img src="screenshots/showcase.png" alt="Showcase screenshot" style="height:300px; object-fit: contain;">
+  <img src="screenshots/home.png" alt="Home screenshot" style="height:300px; object-fit: contain;">
+</div>
+
 
 ## Unofficial packages
 > [!WARNING]
