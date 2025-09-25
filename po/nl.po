@@ -29,7 +29,7 @@ msgstr "Maak je afbeeldingen klaar voor de wereld"
 
 #: data/be.alexandervanhee.gradia.desktop.in.in:10
 msgid "Image;Gradient;Background;Screenshot;Edit;"
-msgstr "Afbeelding;Verloop;Achtergrond;Schermafbeelding;Bewerken;"
+msgstr "Afbeelding;Verloop;Achtergrond;Schermafbeelding;Annoteren;"
 
 #: data/be.alexandervanhee.gradia.desktop.in.in:15
 msgid "New Window"
@@ -954,7 +954,7 @@ msgstr "Bronfragment van %Y-%m-%d %H-%M-%S"
 
 #: gradia/ui/image_exporters.py:103
 msgid "Edit"
-msgstr "Bewerken"
+msgstr "Bewerkt"
 
 #: gradia/ui/image_exporters.py:106
 msgid "Enhanced Screenshot"
