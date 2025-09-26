@@ -1,6 +1,8 @@
 {
   "id": "be.alexandervanhee.gradia.Plugin.ocr",
   "runtime": "be.alexandervanhee.gradia",
+  "branch": "stable",
+  "runtime-version": "stable",
   "sdk": "org.gnome.Sdk//49",
   "separate-locales": false,
   "appstream-compose": false,
