@@ -37,7 +37,6 @@ class OCRDialog(Adw.Dialog):
         self.image = image
         self.ocr = OCR()
         self.primary_lang = "eng"
-        self.secondary_lang = None
         self._setup_language_button()
         self._start_ocr()
         self.ocr_text_view.remove_css_class("view")

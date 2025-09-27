@@ -64,7 +64,6 @@ endif
 # OCR Directories
 OCR_TESSERACT_CMD = '/app/bin/tesseract'
 OCR_ORIGINAL_TESSDATA_DIR = '/app/share/tessdata'
-OCR_USER_TESSDATA_DIR = '~/.var/app' / APPLICATION_ID / 'data' / 'tessdata'
 
 # Install configuration data
 conf = configuration_data()
@@ -82,7 +81,6 @@ conf.set('BUILD_DIR', meson.current_build_dir())
 
 conf.set('OCR_TESSERACT_CMD', OCR_TESSERACT_CMD)
 conf.set('OCR_ORIGINAL_TESSDATA_DIR', OCR_ORIGINAL_TESSDATA_DIR)
-conf.set('OCR_USER_TESSDATA_DIR', OCR_USER_TESSDATA_DIR)
 
 # Install project information
 conf.set('RELEASE_VER', meson.project_version())

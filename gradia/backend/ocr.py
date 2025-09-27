@@ -26,7 +26,7 @@ from pathlib import Path
 from gradia.backend.logger import Logger
 from gradia.backend.settings import Settings
 from gradia.constants import app_id
-from gradia.constants import ocr_tesseract_cmd, ocr_original_tessdata, ocr_user_tessdata
+from gradia.constants import ocr_tesseract_cmd, ocr_original_tessdata
 
 
 logger = Logger()
@@ -63,7 +63,7 @@ class OCR:
     def __init__(self, window=None):
         self.tesseract_cmd = ocr_tesseract_cmd
         self.original_tessdata_dir = ocr_original_tessdata
-        self.user_tessdata_dir = ocr_user_tessdata
+        self.user_tessdata_dir = os.path.expanduser(f"~/.var/app/{app_id}/data/tessdata")
         self.window = window
 
         pytesseract.pytesseract.tesseract_cmd = self.tesseract_cmd
@@ -90,27 +90,21 @@ class OCR:
             logger.warning(f"Cannot set model {model_code}: not installed")
             raise ValueError(f"Model {model_code} is not installed")
 
-    def extract_text(self, image, primary_lang="eng", secondary_lang="eng"):
+    def extract_text(self, image, primary_lang):
         if not self.get_installed_models():
             raise RuntimeError("No OCR language models are available")
 
         if not self.is_model_installed(primary_lang):
-            available_models = self.get_installed_models()
-            if available_models:
-                primary_lang = available_models[0]
-                logger.warning(f"Requested language not available, using {primary_lang}")
-            else:
-                raise RuntimeError("No OCR language models are available")
+            raise RuntimeError(f"OCR language model '{primary_lang}' is not installed")
 
         self.set_current_model(primary_lang)
+
         try:
             tessdata_dir = self._get_tessdata_dir_for_lang(primary_lang)
             config = f'--tessdata-dir "{tessdata_dir}"'
-
-            if self.is_model_installed(secondary_lang) and secondary_lang != primary_lang:
-                lang = f"{primary_lang}+{secondary_lang}"
-            else:
-                lang = primary_lang
+            lang = primary_lang
+            if self.is_model_installed("eng") and primary_lang != "eng":
+                lang = f"{primary_lang}+eng"
 
             extracted_text = pytesseract.image_to_string(
                 image,
@@ -168,6 +162,7 @@ class OCR:
 
                 with open(output_path, 'wb') as f:
                     f.write(raw_bytes)
+                    logger.info(f"saving to  {output_path} ")
 
                 logger.info(f"Downloaded OCR model: {model_code}")
                 self.set_current_model(model_code)
