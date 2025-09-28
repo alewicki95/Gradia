@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="@APP_ID@" path="@ROOT_PATH@/">
+  <schema id="@APP_ID@" path="/be/alexandervanhee/gradia/">
      <key name="draw-mode" type="s">
       <default>'SELECT'</default>
       <summary>Current drawing mode</summary>
