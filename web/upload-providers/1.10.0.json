@@ -28,6 +28,10 @@
                 "type": "negative"
             },
             {
+                "text": "Service may not be available in the United Kingdom",
+                "type": "negative"
+            },
+            {
                 "text": "Uses Gradia client ID",
                 "type": "neutral"
             }
