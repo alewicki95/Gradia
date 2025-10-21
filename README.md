@@ -32,6 +32,7 @@
         <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi">
     </a>
 </div>
+
 ---
 <p align="center" style="display: flex; justify-content: center; gap: 1em; flex-wrap: wrap;">
   <img alt="Flathub Downloads" src="https://img.shields.io/flathub/downloads/be.alexandervanhee.gradia?logoColor=%234ec9a2&label=Flathub%20installs" />
