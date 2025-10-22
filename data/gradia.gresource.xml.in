@@ -84,6 +84,7 @@
     <file preprocess="xml-stripblanks">icons/scalable/actions/outline-color-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/engineering-symbolic.svg</file>
     <file preprocess="xml-stripblanks">icons/scalable/actions/scanner-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/code-symbolic.svg</file>
   </gresource>
 </gresources>
 

@@ -117,6 +117,7 @@ class GradiaMainWindow(Adw.ApplicationWindow):
     def _setup_actions(self) -> None:
         self.create_action("shortcuts", self._on_shortcuts_activated)
         self.create_action("about", self._on_about_activated)
+        self.create_action("donate", lambda *args: Gtk.UriLauncher.new("https://ko-fi.com/alexandervanhee").launch(None, None, None, None))
         self.create_action("quit", lambda *_: self.close(),  ['<primary>q', '<primary>w'])
         self.create_action("shortcuts", self._on_shortcuts_activated,  ['<primary>question'])
 
