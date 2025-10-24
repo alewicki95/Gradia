@@ -214,28 +214,45 @@ class FileDialogExporter(BaseImageExporter):
                 return format_key
         return None
 
+    def _convert_rgba_to_rgb(self, pixbuf: GdkPixbuf.Pixbuf) -> GdkPixbuf.Pixbuf:
+        rgb_pixbuf = GdkPixbuf.Pixbuf.new(
+            GdkPixbuf.Colorspace.RGB,
+            False,
+            8,
+            pixbuf.get_width(),
+            pixbuf.get_height()
+        )
+        rgb_pixbuf.fill(0xffffffff)
+        pixbuf.composite(
+            rgb_pixbuf,
+            0, 0,
+            pixbuf.get_width(), pixbuf.get_height(),
+            0, 0,
+            1.0, 1.0,
+            GdkPixbuf.InterpType.BILINEAR,
+            255
+        )
+        return rgb_pixbuf
+
     def _save_image_pixbuf(self, pixbuf: GdkPixbuf.Pixbuf, save_path: str, format_type: str) -> None:
         format_info = SUPPORTED_EXPORT_FORMATS.get(format_type)
-
         if not format_info:
             raise Exception("Unsupported format")
-
+        if format_type.lower() == 'jpeg' and pixbuf.get_has_alpha():
+            pixbuf = self._convert_rgba_to_rgb(pixbuf)
         save_options = format_info['save_options']
         save_keys = save_options['keys'][:]
         save_values = save_options['values'][:]
-
         if not self.settings.export_compress:
             for i in reversed(range(len(save_keys))):
                 key_lower = save_keys[i].lower()
                 if "compression" in key_lower or "quality" in key_lower:
                     del save_keys[i]
                     del save_values[i]
-
         file = Gio.File.new_for_path(save_path)
         success, buffer = pixbuf.save_to_bufferv(format_type, save_keys, save_values)
         if not success:
             raise Exception("Failed to encode image")
-
         output_stream = file.replace(None, False, Gio.FileCreateFlags.REPLACE_DESTINATION, None)
         output_stream.write(buffer, None)
         output_stream.close(None)

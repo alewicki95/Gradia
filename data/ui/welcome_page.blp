@@ -25,6 +25,12 @@ template $GradiaWelcomePage : Adw.BreakpointBin {
           menu-model: app_menu;
           primary: true;
         }
+        [end]
+        Gtk.Button {
+          icon-name: "code-symbolic";
+          tooltip-text: _("Source Snippits");
+          action-name: "win.create-source-image";
+        }
       }
 
       content: Adw.StatusPage status_page {
@@ -76,12 +82,6 @@ template $GradiaWelcomePage : Adw.BreakpointBin {
 menu app_menu {
   section {
     item {
-      label: _("_Source Snippets");
-      action: "win.create-source-image";
-    }
-  }
-  section {
-    item {
       label: _("_Preferences");
       action: "win.preferences";
     }
@@ -90,7 +90,11 @@ menu app_menu {
       action: "win.shortcuts";
     }
     item {
-      label: _("_About Gradia");
+      label: _("Donate to Gradia 💙");
+      action: "win.donate";
+    }
+    item {
+      label: _("About Gradia");
       action: "win.about";
     }
   }
