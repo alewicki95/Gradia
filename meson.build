@@ -65,6 +65,8 @@ endif
 OCR_TESSERACT_CMD = '/app/bin/tesseract'
 OCR_ORIGINAL_TESSDATA_DIR = '/app/share/tessdata'
 
+enable_ocr = get_option('enable-ocr')
+
 # Install configuration data
 conf = configuration_data()
 conf.set('APP_ID', APPLICATION_ID)
@@ -78,7 +80,7 @@ conf.set('BUILD_TYPE', get_option('buildtype'))
 conf.set('SCHEMAS_DIR', PKGDATA_DIR)
 conf.set('SOURCE_DIR', meson.current_source_dir())
 conf.set('BUILD_DIR', meson.current_build_dir())
-
+conf.set('ENABLE_OCR', enable_ocr)
 conf.set('OCR_TESSERACT_CMD', OCR_TESSERACT_CMD)
 conf.set('OCR_ORIGINAL_TESSDATA_DIR', OCR_ORIGINAL_TESSDATA_DIR)
 

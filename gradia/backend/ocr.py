@@ -25,7 +25,7 @@ from gi.repository import Soup, GLib, Gio
 from pathlib import Path
 from gradia.backend.logger import Logger
 from gradia.backend.settings import Settings
-from gradia.constants import app_id
+from gradia.constants import app_id, ocr_enabled
 from gradia.constants import ocr_tesseract_cmd, ocr_original_tessdata
 
 
@@ -79,7 +79,7 @@ class OCR:
             available = Path(ocr_tesseract_cmd).exists() and len(self.get_installed_models()) > 0
             ocr_action = self.window.lookup_action("ocr")
             if ocr_action and hasattr(ocr_action, 'set_state'):
-                ocr_action.set_state(GLib.Variant.new_boolean(available))
+                ocr_action.set_state(GLib.Variant.new_boolean(available and ocr_enabled.lower() == 'true'))
 
     def get_current_model(self):
         return self.settings.trained_data

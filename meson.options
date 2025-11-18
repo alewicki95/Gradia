@@ -1,0 +1,1 @@
+option('enable-ocr', type: 'boolean', value: true, description: 'Enable OCR functionality')
