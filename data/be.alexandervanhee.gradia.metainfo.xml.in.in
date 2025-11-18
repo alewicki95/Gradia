@@ -38,6 +38,16 @@
 		<color type="primary" scheme_preference="dark">#119458</color>
 	</branding>
 	<releases>
+      <release version="1.11.3" date="2025-11-18">
+        <description translate="no">
+          <p>This minor release includes:</p>
+          <ul>
+            <li>A more normal arrow shape</li>
+            <li>Updated translations</li>
+            <li>A fix for JPEG exporting</li>
+          </ul>
+        </description>
+      </release>
       <release version="1.11.2" date="2025-10-22">
         <description translate="no">
           <p>This really minor release includes:</p>

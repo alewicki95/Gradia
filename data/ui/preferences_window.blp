@@ -97,6 +97,7 @@ template $GradiaPreferencesWindow : Adw.PreferencesDialog {
     }
     Adw.PreferencesGroup {
       title: _("Text Extraction");
+      visible: bind template.ocr_enabled;
       Adw.ActionRow  {
         title: _("_Language Models");
         use-underline: true;
