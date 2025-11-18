@@ -20,7 +20,7 @@ from pathlib import Path
 from gi.repository import Gtk, Adw, GLib, Gio, GObject
 from typing import Optional
 
-from gradia.constants import rootdir  # pyright: ignore
+from gradia.constants import rootdir, ocr_enabled  # pyright: ignore
 from gradia.backend.settings import Settings
 from gradia.app_constants import SUPPORTED_EXPORT_FORMATS
 from gradia.backend.logger import Logger
@@ -44,6 +44,8 @@ class PreferencesWindow(Adw.PreferencesDialog):
     provider_name: Gtk.Label = Gtk.Template.Child()
     exiting_combo: Adw.ComboRow = Gtk.Template.Child()
     folder_label: Gtk.Label = Gtk.Template.Child()
+
+    ocr_enabled = GObject.Property(type=bool, default=ocr_enabled.lower() == 'true')
 
     def __init__(self, parent_window: Adw.ApplicationWindow, **kwargs):
         super().__init__(**kwargs)
